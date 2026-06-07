@@ -77,13 +77,9 @@ import com.example.integratedbpmmeter.data.BpmLibraryStats
 import com.example.integratedbpmmeter.data.BpmRangePreset
 import com.example.integratedbpmmeter.data.BpmRecord
 import com.example.integratedbpmmeter.data.BpmSourceType
-import com.example.integratedbpmmeter.data.confidenceBadgeLabel
-import com.example.integratedbpmmeter.data.doubleTimeCompatibleBpm
 import com.example.integratedbpmmeter.data.effectiveCategory
-import com.example.integratedbpmmeter.data.halfTimeFeelBpm
 import com.example.integratedbpmmeter.data.isSamsungMusicSource
 import com.example.integratedbpmmeter.data.needsBpmReview
-import com.example.integratedbpmmeter.data.verificationHintLabel
 import com.example.integratedbpmmeter.media.LocalAudioResolver
 import com.example.integratedbpmmeter.viewmodel.HistoryBpmRangeState
 import com.example.integratedbpmmeter.viewmodel.HistorySortMode
@@ -895,159 +891,173 @@ private fun HistoryRecordItem(
     onDelete: () -> Unit
 ) {
     var menuExpanded by remember(record.id) { mutableStateOf(false) }
-    Card(
+    val category = record.effectiveCategory()
+    val statusLabel = record.compactStatusLabel()
+    val sourceLabel = record.sourceType.label()
+    val artistLine = record.artist?.takeIf { it.isNotBlank() } ?: "Unknown artist"
+    val detailLine = listOf(
+        category.label,
+        statusLabel,
+        sourceLabel
+    ).joinToString(" / ")
+
+    Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 10.dp, vertical = 9.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val category = record.effectiveCategory()
-            val doubleTime = record.bpm.doubleTimeCompatibleBpm()
-            val halfTime = record.bpm.halfTimeFeelBpm()
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Column(
+                modifier = Modifier.width(68.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Column(
-                    modifier = Modifier.width(78.dp),
-                    horizontalAlignment = Alignment.Start
+                Text(
+                    text = String.format(Locale.US, "%.1f", record.bpm),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+                Text(
+                    text = "BPM",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = String.format(Locale.US, "%.1f", record.bpm),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = record.confidenceBadgeLabel(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
                         text = record.title,
+                        modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    val artistAlbum = listOfNotNull(record.artist, record.album).joinToString(" - ")
-                    if (artistAlbum.isNotBlank()) {
-                        Text(
-                            text = artistAlbum,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Text(
-                        text = listOfNotNull(
-                            category.label,
-                            doubleTime?.let { "Double-time ${String.format(Locale.US, "%.1f", it)} BPM" },
-                            halfTime?.let { "Half-time ${String.format(Locale.US, "%.1f", it)} BPM" },
-                            record.confirmationLabel()
-                        ).joinToString(" / "),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    CompactRecordBadge(
+                        text = statusLabel,
+                        needsAttention = record.needsBpmReview()
+                    )
                 }
-                Box {
-                    IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(42.dp)) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "More")
-                    }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Find on YouTube Music") },
-                            leadingIcon = { Icon(Icons.Filled.MusicNote, contentDescription = null) },
-                            onClick = {
-                                menuExpanded = false
-                                onOpenYouTubeMusic()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Link local file") },
-                            leadingIcon = { Icon(Icons.Filled.AttachFile, contentDescription = null) },
-                            onClick = {
-                                menuExpanded = false
-                                onLinkFile()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Edit") },
-                            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
-                            onClick = {
-                                menuExpanded = false
-                                onEdit()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Delete") },
-                            leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
-                            onClick = {
-                                menuExpanded = false
-                                onDelete()
-                            }
-                        )
-                    }
-                }
+                Text(
+                    text = artistLine,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = detailLine,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (record.needsBpmReview()) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            if (record.needsBpmReview()) {
-                ReviewRecordActionStrip(onMarkVerified = onMarkVerified)
+
+            Box {
+                IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    if (record.needsBpmReview()) {
+                        DropdownMenuItem(
+                            text = { Text("Mark verified") },
+                            leadingIcon = { Icon(Icons.Filled.CheckCircle, contentDescription = null) },
+                            onClick = {
+                                menuExpanded = false
+                                onMarkVerified()
+                            }
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text("Find on YouTube Music") },
+                        leadingIcon = { Icon(Icons.Filled.MusicNote, contentDescription = null) },
+                        onClick = {
+                            menuExpanded = false
+                            onOpenYouTubeMusic()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Link local file") },
+                        leadingIcon = { Icon(Icons.Filled.AttachFile, contentDescription = null) },
+                        onClick = {
+                            menuExpanded = false
+                            onLinkFile()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Edit") },
+                        leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                        onClick = {
+                            menuExpanded = false
+                            onEdit()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+                        onClick = {
+                            menuExpanded = false
+                            onDelete()
+                        }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ReviewRecordActionStrip(
-    onMarkVerified: () -> Unit,
+private fun CompactRecordBadge(
+    text: String,
+    needsAttention: Boolean,
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, top = 6.dp, end = 8.dp, bottom = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Tap-check before trusting this BPM",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            TextButton(onClick = onMarkVerified) {
-                Icon(
-                    Icons.Filled.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Verified")
-            }
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = if (needsAttention) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        contentColor = if (needsAttention) {
+            MaterialTheme.colorScheme.onErrorContainer
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
         }
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -1220,23 +1230,15 @@ private fun BpmSourceType.label(): String {
     }
 }
 
-private fun BpmRecord.sourceAppLabel(): String? {
-    return when (sourceAppPackage) {
-        "com.google.android.apps.youtube.music" -> "YouTube Music"
-        "com.sec.android.app.music",
-        "com.samsung.android.app.music" -> "Samsung Music"
-        null -> null
-        else -> sourceAppPackage.substringAfterLast('.')
-    }
-}
-
-private fun BpmRecord.confirmationLabel(): String {
+private fun BpmRecord.compactStatusLabel(): String {
     return when {
-        manuallyVerified || sourceType == BpmSourceType.TAP || sourceType == BpmSourceType.NOW_PLAYING -> "Verified"
+        needsBpmReview() -> "Needs tap-check"
+        manuallyVerified ||
+            sourceType == BpmSourceType.TAP ||
+            sourceType == BpmSourceType.NOW_PLAYING -> "Verified"
         sourceType == BpmSourceType.PUBLIC_REFERENCE -> "Reference"
-        sourceType == BpmSourceType.FILE_ANALYSIS -> "Draft"
-        needsBpmReview() -> "Tap check needed"
-        else -> "Saved"
+        sourceType == BpmSourceType.FILE_ANALYSIS -> "Estimate"
+        else -> "Check"
     }
 }
 

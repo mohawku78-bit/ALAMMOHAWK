@@ -122,6 +122,7 @@
 - Web Search fallback button for public BPM pages when the public database has no direct match.
 - Pasted web/AI BPM references can be used as the selected candidate or saved with the selected file metadata.
 - Room history redesigned as a compact BPM library with search, edit, delete, and BPM/newest/title sorting.
+- Library saved-track rows now use a simpler list layout: BPM on the left, title/artist in the center, a compact status badge, and advanced actions behind the More menu.
 - Saved BPM matching normalizes common title noise such as remaster/version tags before using Library records as current-track references.
 - Settings are grouped into Core, Analysis, and Experimental sections; experimental capture controls stay hidden until enabled or active.
 - Settings now includes a compact `Best path` guide that explains the preferred flow: play music, tap, compare Reference BPM, then save to Library playlists.
@@ -170,6 +171,7 @@
 35. File analysis now uses cross-section drum-focused consensus: if several parts of the file agree on a BPM, that repeated BPM can outrank a single fast burst from one section.
 36. File Tap now compares estimates against tapped/public/saved references in the candidate label, so users can see direct matches, small BPM offsets, and half/double-time family matches at a glance.
 37. File Tap now adds a tap-vs-auto summary line once a tapped BPM exists, helping users decide whether to save the tapped verified BPM or review the automatic estimate.
+38. Library and File Tap list rows were simplified for denser scanning: fewer visible actions, smaller badges, and consistent BPM-first row structure.
 
 ## Caution
 
