@@ -112,6 +112,7 @@
 - Automatic Now Playing BPM via experimental internal playback capture, plus Mic Listen fallback for apps that block capture.
 - Audio file share/open support: send an `audio/*` file from Samsung Music, Files, or another app to Bpm Now for direct analysis.
 - Local audio file analysis with SAF file picker, metadata extraction, automatic analysis after selection, PCM decoding, retry segments, and top 3 BPM candidates.
+- File analysis now combines multiple successful file start positions and prefers BPM values that repeat directly across sections, reducing one-section tempo bursts that previously looked too fast.
 - Real-device File Analyze verification on `SM_F946N` promoted saved Library BPM for three local files: `She's Electric` 128.2 BPM, `Long Green` 128.2 BPM, and `Dumb Dumb Dumb` 111.5 BPM.
 - Public BPM reference lookup using MusicBrainz recording search plus AcousticBrainz `rhythm.bpm` when available.
 - Public BPM lookup now retries with broader MusicBrainz queries and treats missing/unstable AcousticBrainz BPM data as "no public BPM" instead of a hard app failure.
@@ -164,6 +165,7 @@
 32. The Library review action now appears in its own compact strip, keeping row action icons from crowding on narrow screens.
 33. Marking a reviewed BPM as verified now asks for confirmation and shows the BPM/title before changing the record.
 34. Saving an automatic File Analyze estimate now asks for confirmation and explains that it will enter Needs Review until tap-checked.
+35. File analysis now uses cross-section drum-focused consensus: if several parts of the file agree on a BPM, that repeated BPM can outrank a single fast burst from one section.
 
 ## Caution
 

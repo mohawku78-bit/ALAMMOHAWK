@@ -41,25 +41,31 @@ Polish the daily loop:
 5. File BPM
    - Do not overstate accuracy.
    - Prioritize saved verified matches and public references above raw file estimates.
+   - Use drum-focused scoring and cross-section consensus as practical safeguards against one-section fast locks.
    - Future engine work should be benchmarked against real tracks before UI promises change.
 
 ## Next Implementation Steps
 
-1. Finish Library language and layout cleanup.
-   - Default: Play and Share links.
-   - More tools: Find files, Try Samsung, Open app, M3U file.
-   - Tap-check records should be obvious and easy to filter.
+1. Build a real-track accuracy notebook/checklist.
+   - Test at least 10 known-BPM tracks across rock, pop, dance, hip-hop, ballad, and live/quiet-intro cases.
+   - Record top candidate, alternates, public reference, and tap-confirmed BPM.
+   - Tune only when a pattern repeats across several tracks, not for a single song.
 
-2. Add product-level QA coverage.
-   - Unit-test category boundaries, trust labels, double-time range matching, and source-filter behavior.
+2. Keep File Tap trust language strict.
+   - Raw file candidates remain estimates.
+   - Repeated-section candidates can be shown as stronger estimates, but still require tap-check before becoming verified.
+   - If public or saved verified BPM is available, keep it visually above raw analysis.
+
+3. Continue product-level QA coverage.
+   - Unit-test category boundaries, trust labels, double-time range matching, source-filter behavior, and file-section consensus.
    - Keep UI logic small enough that real-device QA remains practical.
 
-3. Refresh release artifacts.
+4. Refresh release artifacts.
    - Run compile, unit tests, lint, and assemble.
    - Copy the latest APK into `release/`.
    - Refresh `SHA256SUMS.txt`, `INSTALL.md`, and release notes.
 
-4. Push after every stable checkpoint.
+5. Push after every stable checkpoint.
    - Remote: `https://github.com/mohawku78-bit/ALAMMOHAWK.git`
    - Branch: `main`
 

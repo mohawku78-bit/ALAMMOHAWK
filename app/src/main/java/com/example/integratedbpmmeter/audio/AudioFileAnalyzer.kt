@@ -66,6 +66,7 @@ class AudioFileAnalyzer(
         val attempts = candidateStartPositions(durationUs, maxAnalysisUs)
         var bestPcm: PcmAudio? = null
         var bestResult = TempoAnalysisResult(emptyList(), "No tempo lock", "not analyzed")
+        val sectionResults = mutableListOf<SectionTempoAnalysis>()
         var lastError: Throwable? = null
 
         for (startUs in attempts) {
@@ -78,6 +79,9 @@ class AudioFileAnalyzer(
 
             result
                 .onSuccess { (pcm, analysis) ->
+                    if (analysis.candidates.isNotEmpty()) {
+                        sectionResults += SectionTempoAnalysis(startUs, analysis)
+                    }
                     if (bestPcm == null || analysis.candidates.size > bestResult.candidates.size) {
                         bestPcm = pcm
                         bestResult = analysis
@@ -91,6 +95,11 @@ class AudioFileAnalyzer(
                     }
                 }
                 .onFailure { lastError = it }
+        }
+
+        val consensusResult = TempoSectionAggregator.aggregate(sectionResults)
+        if (TempoSectionAggregator.shouldPreferConsensus(consensusResult, bestResult, sectionResults)) {
+            bestResult = consensusResult
         }
 
         val pcm = bestPcm ?: throw (lastError ?: IllegalStateException("Audio decode produced no samples"))

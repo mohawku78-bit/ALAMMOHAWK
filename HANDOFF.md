@@ -192,15 +192,16 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-07 Library review-strip follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 verification confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 File Analyze estimate-save confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
-- Latest release APK SHA-256 is `FE6BB928F4F8A2BBE57A1EF1D6871E462F9E991226CE4B9EF8870054E90C51FC`.
-- Latest clean release bundle SHA-256 is `A1E844273AFA876A16088681AECA7D1FAA8DB18F8F128BA12F93C7BB6B8D8B9E`.
+- 2026-06-07 cross-section file-consensus follow-up passed `TempoSectionAggregatorTest`, `TempoEngineTest`, `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; installed successfully over wireless ADB on Galaxy Tab `SM_T970`; file analysis now prefers BPM candidates repeated across multiple file start positions over a single fast section burst.
+- Latest release APK SHA-256 is `9E4E8C9DC91527C68620645EDF213EF06D5C632DC062414F75F698F55E43BA69`.
+- Latest clean release bundle SHA-256 is `F539C534860277E0A161C1C53B87E2E51641BA11B7442A975AE19E91895C5A83`.
 - `QA_NOTES.md` records automated checks and real-device checklist.
 
 ## Known Limitations
 
 - Google Drive connector in this Codex session does not expose raw binary upload for APK files.
 - The local Google Drive desktop account appears different from the Codex Google Drive connector account, so connector search may not find the APK.
-- File analysis uses a practical energy/onset autocorrelation estimator; real-device tuning with multiple music files is still needed.
+- File analysis uses a practical drum/onset autocorrelation estimator with cross-section consensus, but real-device tuning with multiple known-BPM music files is still needed.
 - Public BPM lookup depends on free public database coverage and may return no match even when Google search pages show an answer.
 - YouTube/YouTube Music export is not implemented yet; the realistic path is a later Google OAuth + YouTube Data API playlist export with user confirmation for uncertain matches.
 - The current YouTube Music shortcut only searches the track. It does not add the track to a YouTube Music playlist automatically.
