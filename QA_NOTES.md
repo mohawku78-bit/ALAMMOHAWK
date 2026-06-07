@@ -1,0 +1,220 @@
+# Bpm Now QA Notes
+
+## Automated Verification
+
+- Date: 2026-06-05 22:40 KST
+- `:app:compileDebugKotlin`: passed
+- `:app:testDebugUnitTest`: passed
+- `:app:lintDebug`: passed after fixing permission lint, audio open intent lint, and launcher icon warning
+- `:app:assembleDebug`: passed
+- 2026-06-06 update: added tests that fold 180 BPM double-time locks toward 90 BPM while keeping 160 BPM when it is not an obvious double-time family.
+- 2026-06-06 update: added selected-file preview playback and in-place manual Tap BPM controls to Measure.
+- 2026-06-06 update: added Paste Web BPM Answer parser and tests for English, Korean, and range snippets.
+- 2026-06-06 update: changed the main Measure route from File Analyze to Now Playing manual BPM + web reference flow.
+- 2026-06-06 update: added direct Now Playing public BPM lookup with automatic current-track lookup, manual retry, in-app BPM candidate display, and save-as-public-reference support.
+- 2026-06-06 update: `:app:lintDebug`, `:app:testDebugUnitTest`, and `:app:assembleDebug` passed; debug APK installed on `SM_F946N` and launched through `adb`.
+- 2026-06-06 update: compacted Now Playing so the main screen shows title/artist, tap pad, single-line stats, Reset/Save, result-only Reference BPM, and no top app bar on main tabs.
+- 2026-06-06 update: refreshed visual design tokens, card surfaces, navigation styling, and Tap Pad treatment for a more polished music-tool feel.
+- 2026-06-06 update: separated current song title/artist and transport controls into a compact media card above the Tap Pad so the album-art Tap Pad remains a clean tap target.
+- 2026-06-06 update: added status-bar-safe padding to main tabs after the top app bar was removed.
+- 2026-06-06 update: renamed the visible app label to `Bpm Now` and added previous/play-pause/next controls for controllable active media sessions.
+- 2026-06-06 update: refined album-art Tap Pad backgrounds using current media artwork plus blur, dark overlay, and text shadows for a cleaner floating BPM treatment.
+- 2026-06-06 update: redesigned Measure around an instrument-style BPM gauge panel with internal tap status/progress and icon-led controls.
+- 2026-06-06 update: added saved Library BPM fallback for current-track Reference BPM, plus tests for title-noise matching such as remastered versions.
+- 2026-06-06 update: added BPM smart categories, double-time compatibility hints, smart Library list filters, category override editing, manually verified flags, and Room v1->v2 migration.
+- 2026-06-06 update: smart category tests cover classification ranges and 70-90 BPM double-time conversion.
+- 2026-06-06 update: added BPM playlist range presets for 160/170/180, custom min/max filtering, double-time playlist matching, and plain-text sharing for the filtered Library list.
+- 2026-06-06 update: fixed Library scrolling by making the whole Library screen one vertical lazy list, and replaced the default bottom navigation with a compact inset-safe custom bar.
+- 2026-06-06 update: added per-track YouTube Music search shortcuts and YouTube Music search links in the shared playlist text.
+- 2026-06-06 update: Now Playing now stores hidden media URI metadata when exposed by the source player, and Library can export visible records with local URI data as M3U8.
+- 2026-06-06 update: added source-app filters for Samsung Music, YouTube Music, Local files, and Other apps; Room v2->v3 clears old saved records so new records start with source-app and hidden media URI policy.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; debug APK installed on `SM_F946N`, launched, and Library showed `0 records` with the new source filters.
+- 2026-06-06 update: added Samsung Music MediaStore backfill for M3U8 export, including audio-library permission request, local file matching, automatic matching on save when permission exists, and compact `TXT / Find / M3U8` Library controls.
+- 2026-06-06 update: Samsung Music M3U8 backfill build passed `:app:lintDebug`, `:app:testDebugUnitTest`, and `:app:assembleDebug`; debug APK installed on `SM_F946N`.
+- 2026-06-06 update: added full-library MediaStore fallback scan and per-record manual local-file linking through the Android file picker; build/lint/tests passed and the installed app showed `8 M3U8-ready` records in Library after broader matching.
+- 2026-06-06 update: changed M3U8 export to save into `Downloads/Bpm Now`, added Android system music playlist creation, and verified on `SM_F946N` that `Create Music playlist` created a playlist with 7 tracks.
+- 2026-06-06 update: added Samsung Music package visibility and explicit launch fallback; verified the in-app Samsung Music launcher focuses `com.sec.android.app.music/.common.activity.MusicMainActivity` on `SM_F946N`.
+- 2026-06-06 update: replaced text-heavy playlist export buttons with compact icon actions after screenshot QA showed large-font wrapping on the Fold display.
+- 2026-06-06 update: changed Samsung Music playlist export to recreate the app-created system playlist before inserting tracks; verified `Bpm Now Playlist` was recreated as MediaStore playlist `1000155912` with 7 non-duplicated members.
+- 2026-06-06 update: Samsung playlist creation now launches the music-library permission request itself when needed; the latest verified build installed on `SM_F946N` and recreated `Bpm Now Playlist` as MediaStore playlist `1000155913` with 7 non-duplicated members.
+- 2026-06-06 update: verified the Android `Open saved M3U8` chooser on `SM_F946N`; MX Player, AIMP, YouTube Music, and other players appeared, but Samsung Music did not. Updated the app to warn that Samsung Music does not import shared M3U8 files and moved the Samsung path into dedicated playlist actions.
+- 2026-06-06 update: added an in-app Library local playlist player for visible BPM-filtered local tracks, because Samsung Music is absent from the tested M3U8 chooser and may hide external/app-created playlists.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:lintDebug`, `:app:testDebugUnitTest`, and `:app:assembleDebug` passed; debug APK installed on `SM_F946N`.
+- 2026-06-06 update: verified Library `Play` starts the visible local queue on `SM_F946N`; UI dump showed `She's Electric / Oasis / 128.2 BPM / 1/8 / Playing` with previous, pause, next, stop, progress, elapsed, and duration controls.
+- 2026-06-06 update: screenshot QA moved the Library player from a bottom overlay to an inline card under the filters, so it no longer covers the BPM playlist range panel.
+- 2026-06-06 update: Library in-app playback now requests Android audio focus, pauses on focus loss, ducks on transient duck requests, and releases focus on pause/stop.
+- 2026-06-06 update: moved the BPM playlist action row above manual min/max inputs and made `Play` the first primary action; UI dump verified `Play / Text / Find / M3U8 / Samsung` appear in that order on `SM_F946N`.
+- 2026-06-06 update: `:app:lintDebug`, `:app:testDebugUnitTest`, and `:app:assembleDebug` passed; latest debug APK installed successfully on `SM_F946N`; `release/BpmNow-debug.apk` SHA-256 is `9584BF964D33FAE4EF03A9233BD17FC3667274BB96EA98448B9DA1038477BEE4`.
+- 2026-06-06 update: Library playback queue now syncs with current filters/search/sort. On `SM_F946N`, starting Library playback and switching to `Running 160-180` stopped the 128.2 BPM track and showed `No local tracks in this view`.
+- 2026-06-06 update: verified on the narrow `904x2316` device viewport that empty filtered views disable Play/Previous/Next while Stop remains available to dismiss the player status card.
+- 2026-06-06 update: `:app:lintDebug`, `:app:testDebugUnitTest`, and `:app:assembleDebug` passed; latest debug APK installed successfully on `SM_F946N`; `release/BpmNow-debug.apk` SHA-256 is `631B2A794AB6D1AF182C94000F89547ECA4852C727015C4485342357046E8FFD`.
+- 2026-06-06 update: changed Library record rows to a stacked layout so title/artist/category/source metadata are not squeezed out by action icons on narrow screens.
+- 2026-06-06 update: verified on `SM_F946N` narrow `904x2316` viewport that the first record row shows `She's Electric`, `Oasis`, `Groove / General`, `Samsung Music`, and `M3U8-ready`.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:lintDebug`, `:app:testDebugUnitTest`, and `:app:assembleDebug` passed; latest debug APK installed successfully on `SM_F946N`; `release/BpmNow-debug.apk` SHA-256 is `1D1CE88470BF31EEE07E3CB55061BA787B743F0FEF3E5E32F6350EEB919EE450`.
+- 2026-06-06 update: verified through Android package-manager intent queries on `SM_F946N` that Samsung Music is not listed for `audio/x-mpegurl` or `audio/mpegurl` M3U8 open/share targets.
+- 2026-06-06 update: changed the Library playlist action order to prioritize `Play / Find / Samsung`, made Samsung playlist creation open Samsung Music after a successful export, and clarified M3U8 status copy as compatible-player export.
+- 2026-06-06 update: tapped the visible Library `Samsung` action on `SM_F946N`; window focus changed to `com.sec.android.app.music/.common.activity.MusicMainActivity`, confirming the Samsung-specific path launches Samsung Music directly.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:lintDebug`, `:app:testDebugUnitTest`, and `:app:assembleDebug` passed; latest debug APK installed successfully on `SM_F946N`; final Library UI dump verified `Play / Find / Samsung` visible on the narrow viewport; `release/BpmNow-debug.apk` SHA-256 is `3769B0DD332ABF1221065A14D950F9E340803DF36AA8FA957A62BA0DA73E2F58`.
+- 2026-06-06 update: verified Samsung Music is exposed by package manager for broad `audio/*` and `application/itunes` M3U-style intents, but selecting Samsung Music from the widened chooser returned focus to Bpm Now, so the app keeps M3U8 as a compatible-player export rather than the Samsung primary path.
+- 2026-06-06 update: added `PlaylistExportFormatterTest`, deduplicated M3U8 output by local file URI, and changed the Library playlist panel from `8 local tracks` to `7 local tracks` for the current duplicate-file data set.
+- 2026-06-06 update: created a new `Bpm Now M3U8 (4)` file on `SM_F946N`; MediaStore playlist id `1000155942` contained 7 unique members with no duplicate `Long Green` entry.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; that debug APK installed successfully on `SM_F946N`; `release/BpmNow-debug.apk` SHA-256 was `E15F86DDE19D1DF5642004E25315BF9AB0BA75FBC0AA97F5F226E92DBD32BA75`.
+- 2026-06-06 update: changed the Library playlist actions to a two-row grid; UI dump on `SM_F946N` verified `Play / Find / Samsung` and `Lists / M3U8 / Text` are all visible on the narrow `904x2316` viewport.
+- 2026-06-06 update: tapped Library `Lists` on `SM_F946N`; Samsung Music opened with the `플레이리스트` tab selected, confirming the Samsung-specific playlist route works separately from the generic M3U8 chooser.
+- 2026-06-06 update: latest installed `release/BpmNow-debug.apk` SHA-256 is `103F1BB67A6BDDB353A70C93AAF91445F4703D27357B75A79B9534A780FACD54`.
+- 2026-06-06 update: changed `Samsung` playlist export so it remains enabled for visible records and automatically attempts Samsung Music local-file matching before playlist creation.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; latest debug APK installed successfully on `SM_F946N`.
+- 2026-06-06 update: UI dump on `SM_F946N` verified the `Samsung` action is enabled in the two-row Library action grid; tapping it opened Samsung Music with `플레이리스트` selected and created MediaStore playlist `Bpm Now Playlist` id `1000155950` with 7 members.
+- 2026-06-06 update: latest installed `release/BpmNow-debug.apk` SHA-256 is `114731A45CDEFC9EBA9BF4B6ECBFB28BF800263C5BA6B2060CBDA0361BDF49B4`.
+- 2026-06-06 update: added compact first-run/Settings permission status cards for current media access and microphone listen, including the speaker-playback warning for Mic Listen.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; latest debug APK installed successfully on `SM_F946N`.
+- 2026-06-06 update: UI dump on `SM_F946N` verified Settings shows `Current media access`, `Microphone listen`, and `Ready` status chips; after compacting the cards, `Analysis` and `BPM range` are visible on the first Settings viewport.
+- 2026-06-06 update: release folder now contains `IntegratedBpmMeter-debug.apk`, `BpmNow-debug.apk`, `SHA256SUMS.txt`, `INSTALL.md`, and `RELEASE_NOTES.md`; latest SHA-256 is `DB55A0EF900BEBCED836DB9F196572345784DA5AB4AD98337C15EC7D5C29252C`.
+- 2026-06-06 update: created clean release bundle `BpmNow-release-package.zip` containing the two APK filenames, checksum file, install guide, and release notes; zip SHA-256 is `79190492431E6A775787E3FE6E84A3C100C82668ED6C8F172A7040734EB532DA`.
+- 2026-06-06 update: verified current device data has 8 Samsung Music BPM records and 7 unique linked local files; `Samsung` created `Bpm Now Playlist` id `1000155955` with 7 MediaStore members, while Library now shows `7 ready` and disables the old `Find` action as `Linked` when no Samsung records need matching.
+- 2026-06-06 update: changed generic M3U export so it saves silently to `Downloads/Bpm Now` and no longer opens an Android chooser where Samsung Music is absent; Library now labels it `M3U file` and keeps Samsung Music playlist creation on the dedicated `Samsung` action.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; refreshed `release/BpmNow-debug.apk` and `release/IntegratedBpmMeter-debug.apk`; latest APK SHA-256 is `B4825DB67CBB492EABB9E716F7194EF1956BBEEDC9E8114BCB7812AFD62B1876`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `B92BA1FFA3A22F47E78CE2880FB5D0DCFC79EF8D9EBE8E3EF1E770667F5DBA04`.
+- 2026-06-06 update: installed the refreshed APK on `SM_F946N`; UI dump verified `M3U file`, the Samsung/M3U explanatory note, and `7 ready`. Tapping `M3U file` kept focus on Bpm Now and showed `M3U8 saved to Downloads/Bpm Now; use Samsung to create a Samsung Music playlist`.
+- 2026-06-06 update: File Analyze now promotes trusted saved Library BPM references ahead of raw file-analysis candidates. Added unit tests for manual-reference priority, previous FILE_ANALYSIS records not being promoted, duplicate BPM removal, and punctuation fallback lookup.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after File Analyze saved-reference changes; refreshed APK SHA-256 is `D0AFF9F4055775EA5E6E901E28C2E3DDD7E61BAEEA9BF44763257E7C0226C56B`.
+- 2026-06-06 update: real-device File Analyze on `SM_F946N` promoted saved Library BPM for three local files: `She's Electric` / Oasis -> 128.2 BPM, `Long Green` / The Kingsmen -> 128.2 BPM, and `Dumb Dumb Dumb` / Teenage Fanclub -> 111.5 BPM. This specifically fixes the earlier `She's Electric` raw file-analysis miss that recommended 100.0 BPM.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `07C79E342444F4090837B38180713E396B8E844CF66CB0F51861FFB313DB6DC2`.
+- 2026-06-06 update: File Analyze now automatically starts public BPM lookup after selected-file metadata is read, promotes high-confidence public references ahead of raw file analysis when no saved verified BPM exists, and keeps saved verified Library BPM ahead of both.
+- 2026-06-06 update: clarified the Samsung/M3U export UX: the generic button is now `Save M3U`, its status explains Samsung Music does not import shared M3U reliably, and the dedicated `Samsung` button remains the Samsung Music playlist path.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; updated APK installed successfully on `SM_F946N`; direct UI dump verification was blocked by the phone's AOD/keyguard returning `com.android.systemui` only.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `78FA36A26675FE49A35A580BBD5F043AEACCFF9BF91FA08D6923614AD6989BFB`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `14614C74F33835DC99E7C25F43D2B031E1D135092149DA899E95881B13E35398`.
+- 2026-06-06 update: extracted Local Audio matching into a pure matcher and added unit coverage for track-number/artist filename prefixes, same-title artist preference, one-character Korean search tokens, apostrophe/remaster noise, and loose-overlap rejection.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after local music matching improvements; no Android device was connected for install/UI verification in this pass.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `09145FA54436BEF6296CAF059DED812E7C42893817AF2B6D0D47CED38FDDCCC1`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `8CD9A8DBF4F07B985C5D05C6F9260798EDBAB43D9E4086133658F525EF8A9DC4`.
+- 2026-06-06 update: added Compose `KeepScreenOn` behavior: Measure/Tap/File Analyze keep the screen awake while open, and Library keeps it awake only while the in-app player is preparing or playing.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after screen-awake improvements; no Android device was connected for install/UI verification in this pass.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `2DE84A19C529F02837B4634E3042127D74B0938F7957B0DF4442FB49A4CAA9FC`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `A7F2CDD2C282AD81B94EA8C0363109DB56199EC3A459BA26C128D0B184F56954`.
+- 2026-06-06 update: installed latest `BpmNow-debug.apk` on real device `SM_F946N` (`R3CW70KPD4M`) via `adb install -r`; install succeeded.
+- 2026-06-06 update: real-device UI dump verified the Measure screen is the actual app UI, showing `No active media`, `TAP BPM`, `Reset`, `Save`, `REFERENCE BPM`, `Open File Analyze`, and bottom tabs `Measure / Library / Settings`.
+- 2026-06-06 update: real-device UI dump verified the Library export panel shows `7 ready`, `Play / Linked / Samsung`, `Lists / Save M3U / Text`, and the inline note `Use Samsung to create a Samsung Music playlist. Save M3U is for other players because Samsung Music may not appear in the share sheet.`
+- 2026-06-06 update: tapped Library `Save M3U` on `SM_F946N`; Bpm Now stayed focused instead of opening an Android chooser, and `Download/Bpm Now/Bpm Now M3U8 (6).m3u8` was created with 7 local tracks.
+- 2026-06-06 update: tapped Library `Samsung`; focus moved to `com.sec.android.app.music/.common.activity.MusicMainActivity`, MediaStore playlist `Bpm Now Playlist` id `1000155983` was present, and its members query returned 7 audio IDs in play order.
+- 2026-06-06 update: with Measure active, `dumpsys window` reported `mHoldScreenWindow=Window{... com.example.integratedbpmmeter/com.example.integratedbpmmeter.MainActivity}`, confirming the screen-awake behavior is active on the real device.
+- 2026-06-06 update: real-device Library BPM preset QA on `SM_F946N` confirmed `160` applies `160-169 BPM / 0 ready` with export actions disabled for an empty filtered view.
+- 2026-06-06 update: real-device Library BPM preset QA confirmed `180` applies `180-189 BPM / 1 ready`, enables playlist/export actions, and scrolling reveals the matching `Car Jamming / The Clash / 185.9 BPM / Samsung Music / M3U8-ready` Library row.
+- 2026-06-06 update: Library empty-filter UX was tightened: `160` now shows `0 visible`, `No tracks match this view`, `Clear filters or choose another BPM range.`, and a visible `Clear filters` button directly under the filters; tapping it returned the Library to `8 records` and `Pick a preset or enter min / max / 7 ready` on `SM_F946N`.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `E210F523F40B0978ABA75C55FEB84A476C275B9590D5A381A61FD482B3BAE782`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `631E577CBBA282CC407E1AC211A87D2466D8A7D632E18966990180AF1FA124D1`.
+- 2026-06-06 update: Settings first-run UX now shows compact `Best path`, `Current media access`, and `Microphone listen` cards on `SM_F946N`; mic copy explicitly says Bluetooth/wired headphone-only audio cannot be heard.
+- 2026-06-06 update: Settings `Reset Analysis` button was verified on `SM_F946N`: it changed the drifted `200 - 240 BPM / 105 seconds` settings back to `60 - 200 BPM / 90 seconds`.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `0B77253565AFC874D70E99453A7FC0913C89ECB1541D4F2574EA92E319011E8E`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `5A5D42987CF8C9296F63926D5EFFB4AA35A110CA0E4073C54A87BA4BF8F603A2`.
+- 2026-06-06 update: added File Analyze analysis-range risk detection and unit tests. Default `60 - 200 BPM` is not flagged, `200 - 240 BPM` is flagged as fast-only, and narrow ranges are flagged as too narrow.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after the File Analyze range-warning change; latest debug APK installed successfully on `SM_F946N`.
+- 2026-06-06 update: real-device File Analyze QA confirmed no warning appears at default range, forcing Settings to `186 - 200 BPM` shows `Analysis range may be biased`, and tapping inline `Reset Analysis` removes the warning.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `F155FE9B9624E188F95C38C4FAC2372071BF72C6A48E8F570124622839E902CC`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `0AF0D813FCFBCE6AD2C14FE709E2341098CED838E926E8719E76F09CCFCDFDD1`.
+- 2026-06-06 update: File Analyze now distinguishes trusted saved/public/tap references from raw file estimates. Raw file-analysis rows are labeled `Auto file estimate`, selected raw candidates show `Selected Estimate`, and the primary action reads `Save Estimate`.
+- 2026-06-06 update: Hybrid tempo no longer inflates low native segment agreement with candidate confidence. Added `FileCandidateTrustTest` and a regression test for preserving low native agreement.
+- 2026-06-06 update: real-device File Analyze QA on `SM_F946N` used `content://media/external/audio/media/1000000806` (`She's Electric`). The screen preferred saved Library BPM 128.2, showed public references as alternates, and labeled raw candidates as `Auto file estimate`.
+- 2026-06-06 update: selecting a raw candidate on `SM_F946N` showed `Selected Estimate`, `Auto estimate. Tap-check before saving.`, `Save Estimate`, and `Tap Correct` above the compact `Native + Kotlin / Family ... / Agreement ...` diagnostics.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `9F2A293448FAF698FE98CEB2376A4F0C7FD3BB893078DCE0A8B079B60D53BAA4`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `867E1920BB544C6B26C3A1F5B023EC2526D175DEDC84C95EEB492F276BB8A489`.
+- 2026-06-06 update: raw File Analyze automatic candidates no longer display confidence as `95%` or `100%`; they use `Estimate`/`Check` badges, while trusted saved/public/tap references keep normal confidence percentages.
+- 2026-06-06 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; latest debug APK installed successfully on `SM_F946N`.
+- 2026-06-06 update: real-device File Analyze QA on `SM_F946N` used `content://media/external/audio/media/1000000806` (`She's Electric`). Raw alternates now show `Auto file estimate` with `Estimate`, and the selected raw panel shows `Selected Estimate`, `Estimate`, `Auto estimate. Tap-check before saving.`, `Save Estimate`, and `Tap Correct`.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `F1F58A7497F3615FA59BBDDF21AEAB3EB920E2FDC17EA95A4F4DB8A4F0CCB981`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `4CD397BCD79D5339802DE0493BCB926587A8FFA73DE771ADB1BAD58FA4A85BD3`.
+- 2026-06-06 update: Library saved-record display now reuses trust labels. Raw file-analysis records show `Estimate` plus `Needs tap-check`; experimental mic/capture records show `Check`; trusted tap/media/public records keep normal confidence percentages.
+- 2026-06-06 update: added `BpmRecordTrustTest`; `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed. Latest debug APK installed successfully on `SM_F946N`, and Library UI dump verified existing trusted media records still show confidence percentages and `Verified`.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `F9010ED469D50729A2FEAA52567548F2A123328609299B5BB0EDD5C094043286`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `03D74AD221449925496A6FEA6EDB69C54606B49196FE75C408F80D03C0DE7AA1`.
+- 2026-06-06 update: added Library `Needs Review` smart list for untrusted file-analysis, mic, and capture estimates. `BpmRecordTrustTest` now covers `needsBpmReview()`.
+- 2026-06-06 update: `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; latest debug APK installed on `SM_F946N`; UI dump verified `Needs Review` appears at the end of the Library smart-list filters.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `78B759CDED8F74786FAB6A2C109E4D8944B69C91DD78E8EC644EEE9DC174789B`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `71675DC279414FB52ADC0BC56B86DF4539BB62B33832162196F32FC8DB4F4C25`.
+- 2026-06-06 update: improved file-analysis candidate merging so half/double tempo families are not averaged into fake middle BPM values, and multi-window analysis favors tempos repeated across distinct segments.
+- 2026-06-06 update: added regression tests for half/double fake-middle prevention, repeated-segment preference, and analysis-quality scoring.
+- 2026-06-06 update: `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; latest debug APK installed on `SM_F946N`; UI dump verified the Measure screen still shows current media, Tap BPM, Reference BPM, and bottom tabs.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `68A82E0746A6D24375F622681D9D8BB50F76BDECDE0EC0F38AFA92408F45DDBF`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `48DB504A1C45F0D291966E9A8A2CC9C64905E9622A387737130EBF3C1BE775EC`.
+- 2026-06-06 update: Kotlin fallback tempo scoring now uses normalized autocorrelation and near-200 BPM tie downranking. Added regression tests for a 100 BPM track with loud eighth-note subdivisions while preserving 160 and 174 BPM synthetic coverage.
+- 2026-06-06 update: `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after the fallback scoring change. Real-device install was not repeated because `R3CW70KPD4M` stayed in ADB `offline` state after reconnect and adb-server restart attempts.
+- 2026-06-06 update: latest refreshed APK SHA-256 is `428C6B744CD5571D560D5F94861E5AB45304FEC797385DFA1DF2AAC358BA8067`.
+- 2026-06-06 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `41D9327405107422081BD3DB998BF9CB64C650237198D2CD77B7DAD563B236AA`.
+- 2026-06-07 update: Library rows that need review now show a quick `Verified` action; marking a file estimate manually verified removes it from `Needs Review`. `BpmRecordTrustTest` covers this transition.
+- 2026-06-07 update: replaced deprecated Library playlist action icons with auto-mirrored variants, clearing the Kotlin compile warnings from `HistoryScreen.kt`.
+- 2026-06-07 update: `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after the Library quick-verify change. Real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
+- 2026-06-07 update: latest refreshed APK SHA-256 is `A92B9D9DFA562463D4E058E7DB88CB7407803DB66FA722B41D8EE38E98127524`.
+- 2026-06-07 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `BB3BAD1261E317B9D787004F3B5C73B888A98ECAFAE177704455DDC69F148705`.
+- 2026-06-07 update: moved the Library quick `Verified` action into its own compact review strip so the row action icons do not crowd on narrow screens.
+- 2026-06-07 update: `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after the review strip layout change. Real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
+- 2026-06-07 update: latest refreshed APK SHA-256 is `83F9432A0DFF696DBD3F223C5C91AA405BF341BF38E176CEEC02A5EA5C847669`.
+- 2026-06-07 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `44DB987AFB874C7771B1A1EA5CF5E27051F0ED8A353F6397F51C38C09F65CBD4`.
+- 2026-06-07 update: quick `Mark verified` now opens a confirmation dialog showing the BPM and title before changing the record, reducing accidental trust changes.
+- 2026-06-07 update: `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after the verification confirmation dialog change. Real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
+- 2026-06-07 update: latest refreshed APK SHA-256 is `FC24487A219CA3AE7115929A2EFA20B5D677EA1AE0DC1868942196CCE72D5188`.
+- 2026-06-07 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `DFC5C33BB08720279315092C9CA699FFF6FACC0AEC6B43ED29D5992A41F40AC4`.
+- 2026-06-07 update: File Analyze now asks for confirmation before saving an automatic file-analysis estimate and explains that the saved record will stay in `Needs Review` until tap-checked.
+- 2026-06-07 update: `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed after the File Analyze estimate-save confirmation change. Real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
+- 2026-06-07 update: latest refreshed APK SHA-256 is `4E3603EA511D6E48ADDF37164F8D43BDA0EEC1D877630BA833CDB06D48E759C5`.
+- 2026-06-07 update: refreshed clean `BpmNow-release-package.zip`; latest zip SHA-256 is `8189E6A5037B84F09AFFF133A30659632B9DA82DD6A5F0D42346CB81E359DB16`.
+- Synthetic BPM coverage: 80, 90, 100, 120, 128, 140, 160, 174 BPM
+- Tempo family normalization: passed
+- Hybrid native/fallback merge behavior: passed
+- Native library build: `libintegrated_bpm_native.so` produced for arm64-v8a, armeabi-v7a, x86, and x86_64
+
+## Current Limitations
+
+- Three real local audio files were analyzed on the connected `SM_F946N`; raw engine tuning remains pending, but trusted saved Library BPM references now prevent known bad raw locks from being the primary recommendation when a verified track match exists. Candidate merging now also avoids fake half/double middle tempos, favors repeated multi-segment locks, and reduces near-200 BPM subdivision ties.
+- Experimental playback capture remains unreliable by Android design when source apps block capture; it is intentionally kept in Settings only.
+
+## Real-Device Checklist
+
+- Install `IntegratedBpmMeter-debug.apk` on Android 10+.
+- Open Measure and select at least 5 local tracks: one pop, one dance/EDM, one hip-hop, one ballad, one live/quiet-intro track.
+- For each track, record recommended BPM, alternates, public reference BPM, and whether half/double family display helped.
+- Use Tap Correct for one track and save the result.
+- Use Public BPM reference for one track and confirm Library shows source as `Public`.
+- Confirm Library search, BPM low/high sorting, edit, and delete.
+- Confirm Settings persistence for tap sound, BPM range, and analysis segment length.
+- Confirm Settings shows current media access and microphone listen permission cards, and that their status refreshes after returning from Android permission/settings screens.
+- Confirm Experimental capture is not part of the main Measure flow and remains disabled unless explicitly enabled.
+- Confirm the redesigned Measure workbench keeps Select/Analyze/Save/Tap Correct controls reachable on the target phone size.
+- Confirm selected-file Preview + Tap can play, pause, restart, tap BPM, use tapped BPM as selected candidate, and save tapped BPM to Library.
+- Confirm Google AI/search answer text can be pasted, parsed, used as selected candidate, and saved as `Public`.
+- Confirm Measure starts on current media metadata, Tap BPM saves as `Media`, and pasted web BPM saves as `Public` with the same current song context.
+- Confirm Measure automatically checks public BPM for the current media track, shows any returned BPM candidate without opening a browser, and saves that candidate as `Public`.
+- Confirm if public BPM is missing, a previously saved matching Library record appears as the Reference BPM fallback.
+- Confirm compact Now Playing keeps the tap pad and Save button visible with less scrolling on the target phone.
+- Confirm tapping the album-art Tap Pad increments the tap count with the same haptic/sound feedback across the whole pad.
+- Confirm the media transport icons control the current player when the source app exposes media-session controls, and do not increment the tap count.
+- Confirm album art appears behind the Tap Pad when the media session provides artwork, the media card stays separate above it, and BPM text remains readable over bright/dark covers.
+- Confirm Library rows remain readable with long Korean/English titles and BPM low/high sorting.
+- Confirm Library record rows keep title/artist visible on narrow phone layouts and expose row actions after a small scroll when the card is near the bottom of the viewport.
+- Confirm saving 82 BPM shows Low / Double-time and Double-time 164.0 BPM in Library.
+- Confirm Running 160-180 includes direct 160-180 BPM records and compatible 80-90 BPM double-time records.
+- Confirm Library edit can override the smart category and toggle Manually Verified.
+- Confirm the 160 playlist preset includes 160-169 BPM records and 80-84.9 BPM double-time compatible records.
+- Confirm custom min/max BPM inputs filter the Library list and Share exports the visible playlist text.
+- Confirm Library scrolls through saved records after the BPM playlist panel is visible.
+- Confirm the compact bottom bar does not overlap the Android system navigation area.
+- Confirm a Library row's music shortcut opens YouTube Music search when the app is installed, or the browser fallback when not installed.
+- Confirm Share playlist text includes `https://music.youtube.com/search?q=` links for each track.
+- Confirm a Samsung Music/local-player track that exposes a media URI saves that URI invisibly and appears in M3U8 export.
+- Confirm M3U8 export disables or omits records that have no stored local media URI.
+- Confirm Samsung Music source filter shows only records saved from Samsung Music, and its M3U8 export contains only M3U8-ready visible records.
+- If Samsung Music records are not M3U8-ready, tap Library `Find`, grant audio-library permission, confirm the matched count message, then confirm M3U8 becomes enabled.
+- If Library already shows `Linked`, skip `Find` and use `Samsung` to create/update the Samsung Music playlist or `M3U` for compatible-player file export.
+- If `Find` misses a record, tap its local-file link action, choose the exact audio file, and confirm the row changes to `M3U8-ready`.
+- Samsung Music is not present in the tested M3U8 chooser; generic `M3U file` export now saves only, while the `Samsung` playlist button creates/updates the Samsung-readable playlist with automatic local-file matching and `Lists` opens Samsung Music's Playlists tab directly.
+- Export the same Samsung playlist twice and confirm the resulting MediaStore playlist contains one copy of each track rather than duplicate members.
+- If Samsung Music does not show the created playlist, tap Library `Play` and confirm the visible BPM-filtered local tracks play inside Bpm Now with previous/play-pause/next/stop controls.
+- While Library `Play` is active, start/stop another media app or trigger audio focus loss and confirm Bpm Now pauses or ducks instead of competing loudly with the other player.
+- While Library `Play` is active, change source/list/BPM/search filters and confirm the player either updates queue position for still-visible tracks or stops with `Queue changed` / `No local tracks in this view`.
+- Confirm YouTube Music source filter shows YouTube Music records separately and still uses per-track YouTube Music search rather than native playlist insertion.
+
+## Accuracy Notes Template
+
+| Track | Known BPM | Recommended | Alternates | Public Ref | Result |
+| --- | ---: | ---: | --- | ---: | --- |
+|  |  |  |  |  |  |

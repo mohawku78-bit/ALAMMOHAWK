@@ -1,0 +1,24 @@
+# Gradle / Android build output
+.gradle/
+build/
+*/build/
+*/.cxx/
+
+# Local machine configuration
+local.properties
+.idea/
+*.iml
+
+# Generated release artifacts
+release/
+window_dump.xml
+
+# Signing and secrets
+*.jks
+*.keystore
+*.p12
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db
