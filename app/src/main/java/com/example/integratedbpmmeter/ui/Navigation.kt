@@ -150,7 +150,6 @@ fun IntegratedBpmMeterApp(
             }
             composable(Routes.FileAnalyze) {
                 FileAnalyzeScreen(
-                    onTapCorrect = { navController.navigate(Routes.TapBpm) },
                     incomingAudioUri = incomingAudioUri,
                     onIncomingAudioConsumed = onIncomingAudioConsumed
                 )

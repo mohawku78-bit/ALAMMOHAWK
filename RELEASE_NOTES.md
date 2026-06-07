@@ -113,6 +113,7 @@
 - Audio file share/open support: send an `audio/*` file from Samsung Music, Files, or another app to Bpm Now for direct analysis.
 - Local audio file analysis with SAF file picker, metadata extraction, automatic analysis after selection, PCM decoding, retry segments, and top 3 BPM candidates.
 - File analysis now combines multiple successful file start positions and prefers BPM values that repeat directly across sections, reducing one-section tempo bursts that previously looked too fast.
+- File Tap estimates now show compact comparison labels such as `Tap match`, `Reference +2.4 BPM`, or `Tap double-time family`, making it easier to judge an automatic candidate without treating it as verified.
 - Real-device File Analyze verification on `SM_F946N` promoted saved Library BPM for three local files: `She's Electric` 128.2 BPM, `Long Green` 128.2 BPM, and `Dumb Dumb Dumb` 111.5 BPM.
 - Public BPM reference lookup using MusicBrainz recording search plus AcousticBrainz `rhythm.bpm` when available.
 - Public BPM lookup now retries with broader MusicBrainz queries and treats missing/unstable AcousticBrainz BPM data as "no public BPM" instead of a hard app failure.
@@ -166,6 +167,7 @@
 33. Marking a reviewed BPM as verified now asks for confirmation and shows the BPM/title before changing the record.
 34. Saving an automatic File Analyze estimate now asks for confirmation and explains that it will enter Needs Review until tap-checked.
 35. File analysis now uses cross-section drum-focused consensus: if several parts of the file agree on a BPM, that repeated BPM can outrank a single fast burst from one section.
+36. File Tap now compares estimates against tapped/public/saved references in the candidate label, so users can see direct matches, small BPM offsets, and half/double-time family matches at a glance.
 
 ## Caution
 

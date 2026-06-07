@@ -77,6 +77,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.integratedbpmmeter.audio.BpmCandidate
 import com.example.integratedbpmmeter.audio.AudioFileMetadata
 import com.example.integratedbpmmeter.audio.TapBpmSnapshot
+import com.example.integratedbpmmeter.audio.fileEstimateComparisonLabels
 import com.example.integratedbpmmeter.data.BpmRecord
 import com.example.integratedbpmmeter.data.BpmSmartCategory
 import com.example.integratedbpmmeter.data.BpmSourceType
@@ -439,7 +440,6 @@ private fun NowPlayingReferenceResultCard(
 }
 @Composable
 fun FileAnalyzeScreen(
-    onTapCorrect: () -> Unit,
     incomingAudioUri: Uri? = null,
     onIncomingAudioConsumed: () -> Unit = {},
     viewModel: FileAnalyzeViewModel = viewModel(),
@@ -469,6 +469,17 @@ fun FileAnalyzeScreen(
     val selectedCandidate = uiState.selectedCandidate ?: uiState.candidates.firstOrNull()
     val selectedSource = uiState.candidateSources.getOrNull(uiState.selectedCandidateIndex)
     val selectedReasonLabel = uiState.candidateReasonLabels.getOrNull(uiState.selectedCandidateIndex)
+    val comparisonLabels = fileEstimateComparisonLabels(
+        candidates = uiState.candidates,
+        sources = uiState.candidateSources,
+        tapBpm = uiState.tapSnapshot.bpm,
+        publicReferences = uiState.publicBpmCandidates.map {
+            BpmCandidate(
+                bpm = it.bpm,
+                confidence = it.matchScore
+            )
+        }
+    )
     val analysisRangeRisk = settingsState.analysisRangeRisk()
     DisposableEffect(Unit) {
         onDispose { viewModel.pausePreviewPlayback() }
@@ -514,9 +525,6 @@ fun FileAnalyzeScreen(
                 onRestart = viewModel::restartPreviewPlayback,
                 onTap = viewModel::onPreviewTap,
                 onReset = viewModel::resetPreviewTap,
-                onHalf = viewModel::halfPreviewTap,
-                onDouble = viewModel::doublePreviewTap,
-                onUse = viewModel::usePreviewTapCandidate,
                 onSave = viewModel::savePreviewTapCandidate
             )
         }
@@ -539,8 +547,11 @@ fun FileAnalyzeScreen(
                     trust = candidateTrust
                 ),
                 candidate = candidate,
-                sourceLabel = selectedSource.measureSourceLabel(engineName),
-                reasonLabel = selectedReasonLabel,
+                sourceLabel = selectedSource.measureSourceLabel(),
+                reasonLabel = joinedReasonLabel(
+                    selectedReasonLabel,
+                    comparisonLabels.getOrNull(uiState.selectedCandidateIndex)
+                ),
                 detailText = selectedSource.measureDetailText(
                     engineName = engineName,
                     tempoFamily = uiState.tempoFamily,
@@ -563,9 +574,6 @@ fun FileAnalyzeScreen(
                         )
                     }
                 },
-                onHalf = viewModel::halfSelectedCandidate,
-                onDouble = viewModel::doubleSelectedCandidate,
-                onTapCorrect = onTapCorrect,
                 isSaving = uiState.isSaving
             )
         }
@@ -585,8 +593,11 @@ fun FileAnalyzeScreen(
                 CompactCandidateRow(
                     candidate = candidate,
                     selected = index == uiState.selectedCandidateIndex,
-                    label = sourceType.measureSourceLabel(engineName),
-                    reasonLabel = uiState.candidateReasonLabels.getOrNull(index),
+                    label = sourceType.measureSourceLabel(),
+                    reasonLabel = joinedReasonLabel(
+                        uiState.candidateReasonLabels.getOrNull(index),
+                        comparisonLabels.getOrNull(index)
+                    ),
                     confidenceLabel = sourceType.confidenceDisplayLabel(candidateTrust, candidate),
                     onSelect = { viewModel.selectCandidate(index) }
                 )
@@ -846,9 +857,6 @@ private fun PreviewTapBpmCard(
     onRestart: () -> Unit,
     onTap: (Long) -> Unit,
     onReset: () -> Unit,
-    onHalf: () -> Unit,
-    onDouble: () -> Unit,
-    onUse: () -> Unit,
     onSave: () -> Unit
 ) {
     SectionCard {
@@ -1046,9 +1054,6 @@ private fun RecommendedBpmPanel(
     confidenceLabel: String,
     saveLabel: String,
     onSave: () -> Unit,
-    onHalf: () -> Unit,
-    onDouble: () -> Unit,
-    onTapCorrect: () -> Unit,
     isSaving: Boolean
 ) {
     Card(
@@ -1245,7 +1250,7 @@ private fun BpmSourceType?.recommendedPanelTitle(
     }
 }
 
-private fun BpmSourceType?.measureSourceLabel(engineName: String?): String {
+private fun BpmSourceType?.measureSourceLabel(): String {
     return when (this) {
         BpmSourceType.FILE_ANALYSIS -> "Auto estimate"
         BpmSourceType.PUBLIC_REFERENCE -> "Reference BPM"
@@ -1296,6 +1301,15 @@ private fun BpmSourceType?.confidenceDisplayLabel(
         }
         else -> "${String.format(Locale.US, "%.0f", candidate.confidence * 100)}%"
     }
+}
+
+private fun joinedReasonLabel(vararg labels: String?): String? {
+    return labels
+        .filterNotNull()
+        .filter { it.isNotBlank() }
+        .distinct()
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(" / ")
 }
 
 private fun sourceTypeShortLabel(sourceType: BpmSourceType): String {
