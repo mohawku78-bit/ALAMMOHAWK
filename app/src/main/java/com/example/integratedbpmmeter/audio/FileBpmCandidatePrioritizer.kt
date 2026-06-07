@@ -6,6 +6,7 @@ import com.example.integratedbpmmeter.data.BpmSourceType
 data class PrioritizedBpmCandidates(
     val candidates: List<BpmCandidate>,
     val sources: List<BpmSourceType>,
+    val reasonLabels: List<String> = emptyList(),
     val usedSavedReference: Boolean,
     val usedPublicReference: Boolean = false
 )
@@ -15,7 +16,10 @@ object FileBpmCandidatePrioritizer {
         savedReferences: List<BpmRecord>,
         publicReferences: List<BpmCandidate> = emptyList(),
         analysisCandidates: List<BpmCandidate>,
-        analysisSources: List<BpmSourceType> = List(analysisCandidates.size) { BpmSourceType.FILE_ANALYSIS }
+        analysisSources: List<BpmSourceType> = List(analysisCandidates.size) { BpmSourceType.FILE_ANALYSIS },
+        agreementScore: Double = 0.0,
+        segmentsAnalyzed: Int = 0,
+        engineWarnings: List<String> = emptyList()
     ): PrioritizedBpmCandidates {
         val trustedReferences = savedReferences
             .filter { it.isTrustedFileReference() }
@@ -27,15 +31,6 @@ object FileBpmCandidatePrioritizer {
             .filter { it.confidence >= MIN_PUBLIC_REFERENCE_CONFIDENCE }
             .distinctCandidatesByBpm()
             .take(2)
-
-        if (trustedReferences.isEmpty() && trustedPublicReferences.isEmpty()) {
-            return PrioritizedBpmCandidates(
-                candidates = analysisCandidates,
-                sources = analysisSources,
-                usedSavedReference = false
-            )
-        }
-
         val referencePairs = (
             trustedReferences.map { record ->
                 BpmCandidate(
@@ -47,15 +42,35 @@ object FileBpmCandidatePrioritizer {
             }
         ).distinctCandidatePairsByBpm()
         val referenceCandidates = referencePairs.map { it.first }
-        val retainedAnalysis = analysisCandidates
-            .zip(analysisSources.ifEmpty { List(analysisCandidates.size) { BpmSourceType.FILE_ANALYSIS } })
+        val calibratedAnalysis = TempoCandidateCalibrator.calibrate(
+            analysisCandidates = analysisCandidates,
+            analysisSources = analysisSources,
+            referenceCandidates = referenceCandidates,
+            agreementScore = agreementScore,
+            segmentsAnalyzed = segmentsAnalyzed,
+            engineWarnings = engineWarnings
+        )
+
+        if (trustedReferences.isEmpty() && trustedPublicReferences.isEmpty()) {
+            return PrioritizedBpmCandidates(
+                candidates = calibratedAnalysis.candidates,
+                sources = calibratedAnalysis.sources,
+                reasonLabels = calibratedAnalysis.reasonLabels,
+                usedSavedReference = false
+            )
+        }
+
+        val retainedAnalysis = calibratedAnalysis.candidates
+            .zip(calibratedAnalysis.sources)
+            .zip(calibratedAnalysis.reasonLabels)
             .filter { (candidate, _) ->
-                referenceCandidates.none { reference -> candidate.bpm.isSameBpmAs(reference.bpm) }
+                referenceCandidates.none { reference -> candidate.first.bpm.isSameBpmAs(reference.bpm) }
             }
 
         return PrioritizedBpmCandidates(
-            candidates = referenceCandidates + retainedAnalysis.map { it.first },
-            sources = referencePairs.map { it.second } + retainedAnalysis.map { it.second },
+            candidates = referenceCandidates + retainedAnalysis.map { it.first.first },
+            sources = referencePairs.map { it.second } + retainedAnalysis.map { it.first.second },
+            reasonLabels = referencePairs.map { it.second.referenceReasonLabel() } + retainedAnalysis.map { it.second },
             usedSavedReference = trustedReferences.isNotEmpty(),
             usedPublicReference = trustedReferences.isEmpty() && trustedPublicReferences.isNotEmpty()
         )
@@ -81,6 +96,15 @@ object FileBpmCandidatePrioritizer {
             BpmSourceType.MIC_CAPTURE -> 2
             BpmSourceType.PLAYBACK_CAPTURE -> 1
             BpmSourceType.FILE_ANALYSIS -> 0
+        }
+    }
+
+    private fun BpmSourceType.referenceReasonLabel(): String {
+        return when (this) {
+            BpmSourceType.TAP,
+            BpmSourceType.NOW_PLAYING -> "Verified BPM"
+            BpmSourceType.PUBLIC_REFERENCE -> "Reference match"
+            else -> "Reference family match"
         }
     }
 

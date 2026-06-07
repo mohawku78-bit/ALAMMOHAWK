@@ -36,6 +36,7 @@ data class FileAnalyzeUiState(
     val metadata: AudioFileMetadata? = null,
     val candidates: List<BpmCandidate> = emptyList(),
     val candidateSources: List<BpmSourceType> = emptyList(),
+    val candidateReasonLabels: List<String> = emptyList(),
     val selectedCandidateIndex: Int = 0,
     val analyzedSeconds: Double = 0.0,
     val engineName: String? = null,
@@ -114,6 +115,7 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
                     metadata = metadata,
                     candidates = savedReferenceCandidates.candidates,
                     candidateSources = savedReferenceCandidates.sources,
+                    candidateReasonLabels = savedReferenceCandidates.reasonLabels,
                     selectedCandidateIndex = 0,
                     isReadingMetadata = false,
                     statusMessage = when {
@@ -170,7 +172,10 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
             val prioritizedCandidates = FileBpmCandidatePrioritizer.prioritize(
                 savedReferences = savedReferences,
                 publicReferences = _uiState.value.publicBpmCandidates.toBpmCandidates(),
-                analysisCandidates = analysisCandidates
+                analysisCandidates = analysisCandidates,
+                agreementScore = analysis?.agreementScore ?: 0.0,
+                segmentsAnalyzed = analysis?.segmentsAnalyzed ?: 0,
+                engineWarnings = analysis?.engineWarnings.orEmpty()
             )
 
             _uiState.update { previous ->
@@ -178,6 +183,7 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
                     metadata = analysis?.metadata ?: previous.metadata,
                     candidates = prioritizedCandidates.candidates,
                     candidateSources = prioritizedCandidates.sources,
+                    candidateReasonLabels = prioritizedCandidates.reasonLabels,
                     selectedCandidateIndex = 0,
                     analyzedSeconds = analysis?.analyzedSeconds ?: 0.0,
                     engineName = analysis?.engineName,
@@ -313,7 +319,10 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
                 savedReferences = savedReferences,
                 publicReferences = candidates.toBpmCandidates(),
                 analysisCandidates = analysisOnlyCandidates.map { it.first },
-                analysisSources = analysisOnlyCandidates.map { it.second }
+                analysisSources = analysisOnlyCandidates.map { it.second },
+                agreementScore = latest.agreementScore,
+                segmentsAnalyzed = latest.segmentsAnalyzed,
+                engineWarnings = latest.engineWarnings
             )
 
             _uiState.update {
@@ -322,6 +331,7 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
                     publicBpmCandidates = candidates,
                     candidates = if (candidates.isNotEmpty()) prioritizedCandidates.candidates else it.candidates,
                     candidateSources = if (candidates.isNotEmpty()) prioritizedCandidates.sources else it.candidateSources,
+                    candidateReasonLabels = if (candidates.isNotEmpty()) prioritizedCandidates.reasonLabels else it.candidateReasonLabels,
                     selectedCandidateIndex = if (candidates.isNotEmpty()) 0 else it.selectedCandidateIndex,
                     publicBpmStatusMessage = when {
                         result.isFailure -> "Public BPM lookup failed: ${friendlyLookupError(result.exceptionOrNull())}"
@@ -344,10 +354,13 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
             )
             val retained = state.candidates.zip(
                 state.candidateSources.ifEmpty { List(state.candidates.size) { BpmSourceType.FILE_ANALYSIS } }
-            ).filter { (existing, _) -> kotlin.math.abs(existing.bpm - candidate.bpm) >= 1.0 }
+            ).zip(
+                state.candidateReasonLabels.ifEmpty { List(state.candidates.size) { "Needs tap-check" } }
+            ).filter { (candidatePair, _) -> kotlin.math.abs(candidatePair.first.bpm - candidate.bpm) >= 1.0 }
             state.copy(
-                candidates = listOf(candidate) + retained.map { it.first },
-                candidateSources = listOf(BpmSourceType.PUBLIC_REFERENCE) + retained.map { it.second },
+                candidates = listOf(candidate) + retained.map { it.first.first },
+                candidateSources = listOf(BpmSourceType.PUBLIC_REFERENCE) + retained.map { it.first.second },
+                candidateReasonLabels = listOf("Reference match") + retained.map { it.second },
                 selectedCandidateIndex = 0,
                 statusMessage = "Using public BPM as selected candidate"
             )
@@ -379,10 +392,13 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { state ->
             val retained = state.candidates.zip(
                 state.candidateSources.ifEmpty { List(state.candidates.size) { BpmSourceType.FILE_ANALYSIS } }
-            ).filter { (existing, _) -> kotlin.math.abs(existing.bpm - candidate.bpm) >= 1.0 }
+            ).zip(
+                state.candidateReasonLabels.ifEmpty { List(state.candidates.size) { "Needs tap-check" } }
+            ).filter { (candidatePair, _) -> kotlin.math.abs(candidatePair.first.bpm - candidate.bpm) >= 1.0 }
             state.copy(
-                candidates = listOf(candidate) + retained.map { it.first },
-                candidateSources = listOf(BpmSourceType.PUBLIC_REFERENCE) + retained.map { it.second },
+                candidates = listOf(candidate) + retained.map { it.first.first },
+                candidateSources = listOf(BpmSourceType.PUBLIC_REFERENCE) + retained.map { it.first.second },
+                candidateReasonLabels = listOf("Reference match") + retained.map { it.second },
                 selectedCandidateIndex = 0,
                 statusMessage = "Using pasted web BPM as selected candidate"
             )
@@ -511,10 +527,13 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { state ->
             val retained = state.candidates.zip(
                 state.candidateSources.ifEmpty { List(state.candidates.size) { BpmSourceType.FILE_ANALYSIS } }
-            ).filter { (existing, _) -> kotlin.math.abs(existing.bpm - candidate.bpm) >= 1.0 }
+            ).zip(
+                state.candidateReasonLabels.ifEmpty { List(state.candidates.size) { "Needs tap-check" } }
+            ).filter { (candidatePair, _) -> kotlin.math.abs(candidatePair.first.bpm - candidate.bpm) >= 1.0 }
             state.copy(
-                candidates = listOf(candidate) + retained.map { it.first },
-                candidateSources = listOf(BpmSourceType.TAP) + retained.map { it.second },
+                candidates = listOf(candidate) + retained.map { it.first.first },
+                candidateSources = listOf(BpmSourceType.TAP) + retained.map { it.first.second },
+                candidateReasonLabels = listOf("Tapped BPM") + retained.map { it.second },
                 selectedCandidateIndex = 0,
                 statusMessage = "Tapped BPM selected"
             )
@@ -564,7 +583,11 @@ class FileAnalyzeViewModel(application: Application) : AndroidViewModel(applicat
             updated[state.selectedCandidateIndex] = selected.copy(
                 bpm = (selected.bpm * multiplier).coerceIn(30.0, 400.0)
             )
-            state.copy(candidates = updated)
+            val reasons = state.candidateReasonLabels.toMutableList()
+            if (state.selectedCandidateIndex in reasons.indices) {
+                reasons[state.selectedCandidateIndex] = "Adjusted manually"
+            }
+            state.copy(candidates = updated, candidateReasonLabels = reasons)
         }
     }
 

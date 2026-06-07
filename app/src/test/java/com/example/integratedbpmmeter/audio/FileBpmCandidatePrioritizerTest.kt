@@ -25,6 +25,7 @@ class FileBpmCandidatePrioritizerTest {
         assertTrue(result.usedSavedReference)
         assertEquals(128.2, result.candidates[0].bpm, 0.001)
         assertEquals(BpmSourceType.NOW_PLAYING, result.sources[0])
+        assertEquals("Verified BPM", result.reasonLabels[0])
         assertTrue(result.candidates[0].confidence >= 0.86)
         assertEquals(100.0, result.candidates[1].bpm, 0.001)
     }
@@ -117,6 +118,24 @@ class FileBpmCandidatePrioritizerTest {
         assertEquals(2, result.candidates.size)
         assertEquals(128.2, result.candidates[0].bpm, 0.001)
         assertEquals(64.0, result.candidates[1].bpm, 0.001)
+    }
+
+    @Test
+    fun rawAnalysisReasonsShowReferenceFamilyMatch() {
+        val result = FileBpmCandidatePrioritizer.prioritize(
+            savedReferences = emptyList(),
+            publicReferences = listOf(BpmCandidate(96.0, 0.92)),
+            analysisCandidates = listOf(
+                BpmCandidate(192.0, 0.90),
+                BpmCandidate(96.0, 0.56)
+            ),
+            agreementScore = 0.52,
+            segmentsAnalyzed = 2
+        )
+
+        assertEquals(BpmSourceType.PUBLIC_REFERENCE, result.sources[0])
+        assertEquals("Reference match", result.reasonLabels[0])
+        assertTrue(result.reasonLabels.drop(1).any { it == "Reference family match" })
     }
 
     private fun record(

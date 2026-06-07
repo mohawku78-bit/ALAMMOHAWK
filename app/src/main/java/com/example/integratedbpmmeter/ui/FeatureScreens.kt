@@ -468,6 +468,7 @@ fun FileAnalyzeScreen(
     }
     val selectedCandidate = uiState.selectedCandidate ?: uiState.candidates.firstOrNull()
     val selectedSource = uiState.candidateSources.getOrNull(uiState.selectedCandidateIndex)
+    val selectedReasonLabel = uiState.candidateReasonLabels.getOrNull(uiState.selectedCandidateIndex)
     val analysisRangeRisk = settingsState.analysisRangeRisk()
     DisposableEffect(Unit) {
         onDispose { viewModel.pausePreviewPlayback() }
@@ -539,6 +540,7 @@ fun FileAnalyzeScreen(
                 ),
                 candidate = candidate,
                 sourceLabel = selectedSource.measureSourceLabel(engineName),
+                reasonLabel = selectedReasonLabel,
                 detailText = selectedSource.measureDetailText(
                     engineName = engineName,
                     tempoFamily = uiState.tempoFamily,
@@ -584,6 +586,7 @@ fun FileAnalyzeScreen(
                     candidate = candidate,
                     selected = index == uiState.selectedCandidateIndex,
                     label = sourceType.measureSourceLabel(engineName),
+                    reasonLabel = uiState.candidateReasonLabels.getOrNull(index),
                     confidenceLabel = sourceType.confidenceDisplayLabel(candidateTrust, candidate),
                     onSelect = { viewModel.selectCandidate(index) }
                 )
@@ -1035,6 +1038,7 @@ private fun RecommendedBpmPanel(
     title: String,
     candidate: BpmCandidate,
     sourceLabel: String,
+    reasonLabel: String?,
     detailText: String,
     warningText: String?,
     advisoryText: String?,
@@ -1070,7 +1074,7 @@ private fun RecommendedBpmPanel(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = sourceLabel,
+                        text = listOfNotNull(sourceLabel, reasonLabel).joinToString(" / "),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -1159,6 +1163,7 @@ private fun CompactCandidateRow(
     candidate: BpmCandidate,
     selected: Boolean,
     label: String,
+    reasonLabel: String?,
     confidenceLabel: String,
     onSelect: () -> Unit
 ) {
@@ -1189,7 +1194,7 @@ private fun CompactCandidateRow(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = label,
+                    text = listOfNotNull(label, reasonLabel).joinToString(" / "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

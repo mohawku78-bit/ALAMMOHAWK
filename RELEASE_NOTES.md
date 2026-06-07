@@ -14,6 +14,9 @@
 - Automatic BPM extraction got a focused accuracy pass: both Kotlin and native tempo engines now consider a low-band kick/bass envelope so loud high-frequency subdivisions are less likely to be mistaken for the main beat.
 - Very fast 190-200 BPM candidates are downranked when the half-time pulse has stronger low-frequency support, while 180 BPM is still treated as a valid Running High Pace tempo.
 - Added a regression test for a 96 BPM bass pulse with louder 192 BPM treble subdivisions, matching the common “BPM is way too fast” failure mode.
+- File Tap now calibrates raw automatic candidates before display, preserving useful half/double alternates while picking the most defensible primary candidate.
+- Automatic candidates now show short reason labels such as `Low-band pulse`, `Stable segments`, `Reference family match`, `Possible double-time`, or `Needs tap-check`.
+- Direct saved/public reference-family matches are preferred over raw half/double guesses when deciding which candidate to show first.
 - Measure is simplified into the daily-use order: current song card, large album-art Tap BPM area, Reset/Save, compact Reference BPM result, and File Tap entry.
 - Library now shows the essential controls first: search, short smart-list chips, 160/170/180/custom BPM range presets, Play, and Share links.
 - Advanced Library tools such as source filters, local-file matching, Samsung playlist creation, Samsung Music launch, and M3U export are kept behind `More tools`.
