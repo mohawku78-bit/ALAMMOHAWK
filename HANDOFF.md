@@ -194,8 +194,9 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-07 File Analyze estimate-save confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 cross-section file-consensus follow-up passed `TempoSectionAggregatorTest`, `TempoEngineTest`, `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; installed successfully over wireless ADB on Galaxy Tab `SM_T970`; file analysis now prefers BPM candidates repeated across multiple file start positions over a single fast section burst.
 - 2026-06-07 estimate-comparison follow-up added compact File Tap candidate labels for tapped/public/saved BPM comparison, including direct match, offset, half/double-time family, and no-reference states. Full compile, unit test, lint, and assemble checks passed; installed successfully over wireless ADB on Galaxy Tab `SM_T970`.
-- Latest release APK SHA-256 is `DFF714E761D5D5B3BFFD35FDF2A46C0AE7AFB1282E70A847FF4BEF7219896849`.
-- Latest clean release bundle SHA-256 is `90F68F90D8BBA3D13E78B41B4AC5819773A0C3172B53A1BDE268C3583CC7B840`.
+- 2026-06-07 tap-vs-auto summary follow-up added a compact File Tap summary after tapped BPM is available, showing direct match, small delta, half/double-time family, or large mismatch. Full compile, unit test, lint, and assemble checks passed; installed successfully over wireless ADB on Galaxy Tab `SM_T970`.
+- Latest release APK SHA-256 is `2FC6B8872F3F5DDB3F249283B665B99ABEC899CC874631DE77C83BAAB6D032F8`.
+- Latest clean release bundle SHA-256 is `B4DE2FF19EC9BCF8F6036F72D47DADBB54E6D996ED8F9929415A7BFB988634D1`.
 - `QA_NOTES.md` records automated checks and real-device checklist.
 
 ## Known Limitations

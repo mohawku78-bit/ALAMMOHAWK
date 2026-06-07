@@ -76,8 +76,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.integratedbpmmeter.audio.BpmCandidate
 import com.example.integratedbpmmeter.audio.AudioFileMetadata
+import com.example.integratedbpmmeter.audio.FileEstimateTapSummary
 import com.example.integratedbpmmeter.audio.TapBpmSnapshot
 import com.example.integratedbpmmeter.audio.fileEstimateComparisonLabels
+import com.example.integratedbpmmeter.audio.fileEstimateTapSummary
 import com.example.integratedbpmmeter.data.BpmRecord
 import com.example.integratedbpmmeter.data.BpmSmartCategory
 import com.example.integratedbpmmeter.data.BpmSourceType
@@ -480,6 +482,11 @@ fun FileAnalyzeScreen(
             )
         }
     )
+    val tapSummary = fileEstimateTapSummary(
+        candidates = uiState.candidates,
+        sources = uiState.candidateSources,
+        tapBpm = uiState.tapSnapshot.bpm
+    )
     val analysisRangeRisk = settingsState.analysisRangeRisk()
     DisposableEffect(Unit) {
         onDispose { viewModel.pausePreviewPlayback() }
@@ -531,6 +538,7 @@ fun FileAnalyzeScreen(
 
         if (uiState.selectedUri != null) {
             SectionLabel("Estimates")
+            tapSummary?.let { TapEstimateSummaryLine(it) }
         }
 
         selectedCandidate?.let { candidate ->
@@ -675,6 +683,50 @@ private data class PendingEstimateSave(
     val candidate: BpmCandidate,
     val selectedIndex: Int
 )
+
+@Composable
+private fun TapEstimateSummaryLine(summary: FileEstimateTapSummary) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = if (summary.isWarning) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+        }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = summary.title,
+                modifier = Modifier.weight(0.42f),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (summary.isWarning) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = summary.detail,
+                modifier = Modifier.weight(0.58f),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (summary.isWarning) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
 
 @Composable
 private fun SaveEstimateConfirmationDialog(

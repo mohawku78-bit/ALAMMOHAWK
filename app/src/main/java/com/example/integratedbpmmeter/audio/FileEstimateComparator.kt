@@ -8,6 +8,12 @@ data class TempoReference(
     val label: String
 )
 
+data class FileEstimateTapSummary(
+    val title: String,
+    val detail: String,
+    val isWarning: Boolean
+)
+
 fun fileEstimateComparisonLabels(
     candidates: List<BpmCandidate>,
     sources: List<BpmSourceType>,
@@ -27,6 +33,55 @@ fun fileEstimateComparisonLabels(
             BpmSourceType.PLAYBACK_CAPTURE,
             BpmSourceType.MIC_CAPTURE -> comparisonLabel(candidate.bpm, references)
         }
+    }
+}
+
+fun fileEstimateTapSummary(
+    candidates: List<BpmCandidate>,
+    sources: List<BpmSourceType>,
+    tapBpm: Double?
+): FileEstimateTapSummary? {
+    val tap = tapBpm?.takeIf { it.isFinite() && it in 30.0..400.0 } ?: return null
+    val sourceList = sources.ifEmpty { List(candidates.size) { BpmSourceType.FILE_ANALYSIS } }
+    val estimate = candidates
+        .zip(sourceList)
+        .filter { (_, source) ->
+            source == BpmSourceType.FILE_ANALYSIS ||
+                source == BpmSourceType.PLAYBACK_CAPTURE ||
+                source == BpmSourceType.MIC_CAPTURE
+        }
+        .map { (candidate, _) -> candidate }
+        .minWithOrNull(
+            compareBy<BpmCandidate> { candidate -> directOrFamilyDistance(candidate.bpm, tap) }
+                .thenByDescending { it.confidence }
+        ) ?: return null
+
+    val directDelta = abs(estimate.bpm - tap)
+    return when {
+        directDelta <= CLOSE_MATCH_TOLERANCE_BPM -> FileEstimateTapSummary(
+            title = "Auto matches tap",
+            detail = "${estimate.bpm.formatOne()} BPM estimate / ${tap.formatOne()} BPM tap",
+            isWarning = false
+        )
+        directDelta <= DIRECT_MATCH_TOLERANCE_BPM -> FileEstimateTapSummary(
+            title = "${directDelta.formatOne()} BPM from tap",
+            detail = "${estimate.bpm.formatOne()} BPM estimate / ${tap.formatOne()} BPM tap",
+            isWarning = false
+        )
+        estimate.bpm.isSameTempoFamilyAs(tap, FAMILY_MATCH_TOLERANCE_BPM) -> FileEstimateTapSummary(
+            title = when {
+                abs(estimate.bpm - tap * 2.0) <= FAMILY_MATCH_TOLERANCE_BPM -> "Double-time family"
+                abs(estimate.bpm * 2.0 - tap) <= FAMILY_MATCH_TOLERANCE_BPM -> "Half-time family"
+                else -> "Same tempo family"
+            },
+            detail = "${estimate.bpm.formatOne()} BPM estimate / ${tap.formatOne()} BPM tap",
+            isWarning = false
+        )
+        else -> FileEstimateTapSummary(
+            title = "Estimate differs from tap",
+            detail = "${directDelta.formatOne()} BPM apart / save tapped BPM if it feels right",
+            isWarning = true
+        )
     }
 }
 
@@ -53,6 +108,13 @@ private fun buildReferences(
 
     return (listOfNotNull(tapReference) + directReferences + publicOnlyReferences)
         .distinctBy { reference -> "${reference.label}:${reference.bpm.roundedKey()}" }
+}
+
+private fun directOrFamilyDistance(candidateBpm: Double, referenceBpm: Double): Double {
+    val direct = abs(candidateBpm - referenceBpm)
+    val half = abs(candidateBpm * 2.0 - referenceBpm)
+    val double = abs(candidateBpm - referenceBpm * 2.0)
+    return minOf(direct, half, double)
 }
 
 private fun comparisonLabel(candidateBpm: Double, references: List<TempoReference>): String {
