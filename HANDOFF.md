@@ -12,8 +12,8 @@
 - Google Drive desktop copy: `G:\내 드라이브\Integrated BPM Meter\IntegratedBpmMeter-debug.apk`
 - Android package id: `com.example.integratedbpmmeter`
 - Android app label: `Bpm Now`
-- Latest APK SHA-256: `F75A69EFF1618D78F659B8FFF2B42C214D73388907C92F36081BB676D3424A03`
-- Latest release ZIP SHA-256: `B64CFB302EAD06017ADA4DDF619D678A272AC227B7D90137010F5F7863E90128`
+- Latest APK SHA-256: `DA8FADF8DE773E362DFABD336FE69BF1DC33F0C3A8FF48CECCC1E2E44B3CD695`
+- Latest release ZIP SHA-256: `0E7039F22D4700D9C8EF5A6891925DC2D3EC13CB5FE98938732D410D77E685DB`
 - GitHub remote: `https://github.com/mohawku78-bit/ALAMMOHAWK.git`
 - Git branch: `main`
 - Minimum SDK: 29
@@ -23,6 +23,8 @@
 
 - Three-tab navigation for Measure, Library, and Settings.
 - Final UI polish pass makes the everyday flow explicit: Measure for current song + Tap BPM, Library for workout BPM ranges, Settings for permissions/advanced controls, and File Tap as a secondary file-listening/tapping workflow.
+- Auto-extraction follow-up adds low-band kick/bass envelope scoring in both Kotlin fallback and native C++ tempo engines, reducing cases where loud high-frequency subdivisions win over the underlying beat.
+- Very fast 190-200 BPM candidates are now downranked when the half-time tempo has competitive full-envelope support and stronger low-frequency pulse support. 180 BPM remains valid for Running High Pace.
 - Common Compose UI primitives now standardize cards, chips, action buttons, icon buttons, spacing, and compact info rows across the polished screens.
 - Measure is ordered as current song card, large album-art Tap BPM pad, Reset/Save, compact Reference BPM result, and File Tap entry.
 - Library default controls now prioritize search, short smart-list chips, 160/170/180/custom BPM range presets, Play, and Share links. Source filters, Samsung playlist tools, local-file matching, and M3U export stay behind `More tools`.
@@ -130,6 +132,7 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - `:app:assembleDebug` succeeded.
 - 2026-06-07 final UI polish passed `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` with Microsoft JDK 21.
 - 2026-06-07 latest build installed successfully over wireless ADB on Galaxy Tab `SM_T970`; UI screenshots/dumps verified Measure, Library, Settings, and File Tap after the final polish pass.
+- 2026-06-07 auto-extraction follow-up passed targeted `BpmEstimatorTest`/`TempoEngineTest`, then full `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; latest build installed successfully over wireless ADB on Galaxy Tab `SM_T970`.
 - Debug APK was produced at `app/build/outputs/apk/debug/app-debug.apk`.
 - APK was copied to Google Drive desktop folder as `IntegratedBpmMeter-debug.apk`.
 - 2026-06-06 latest build installed successfully on connected `SM_F946N` via `adb install -r` and launched with `monkey`.
@@ -185,8 +188,8 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-07 Library review-strip follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 verification confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 File Analyze estimate-save confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
-- Latest release APK SHA-256 is `F75A69EFF1618D78F659B8FFF2B42C214D73388907C92F36081BB676D3424A03`.
-- Latest clean release bundle SHA-256 is `B64CFB302EAD06017ADA4DDF619D678A272AC227B7D90137010F5F7863E90128`.
+- Latest release APK SHA-256 is `DA8FADF8DE773E362DFABD336FE69BF1DC33F0C3A8FF48CECCC1E2E44B3CD695`.
+- Latest clean release bundle SHA-256 is `0E7039F22D4700D9C8EF5A6891925DC2D3EC13CB5FE98938732D410D77E685DB`.
 - `QA_NOTES.md` records automated checks and real-device checklist.
 
 ## Known Limitations

@@ -80,6 +80,21 @@ class BpmEstimatorTest {
         )
     }
 
+    @Test
+    fun lowBandSupportKeepsBaseTempoWhenTrebleSubdivisionIsLouder() {
+        val sampleRate = 44_100
+        val candidates = BpmEstimator().estimate(
+            dominantTrebleSubdivisionTrack(sampleRate, bpm = 96.0),
+            sampleRate
+        )
+
+        assertFalse(candidates.isEmpty())
+        assertTrue(
+            "Expected bass pulse near 96 BPM to lead over loud 192 BPM subdivision: $candidates",
+            abs(candidates.first().bpm - 96.0) <= 5.0
+        )
+    }
+
     private fun pulseTrack(sampleRate: Int, bpm: Double): FloatArray {
         val samples = FloatArray(sampleRate * 24)
         val interval = (sampleRate * 60.0 / bpm).toInt()
@@ -147,6 +162,26 @@ class BpmEstimatorTest {
         position = 0
         while (position < samples.size) {
             addSineBurst(samples, sampleRate, position, frequencyHz = 4_500.0, durationSeconds = 0.018, amplitude = 0.48)
+            position += subdivisionInterval
+        }
+
+        return samples
+    }
+
+    private fun dominantTrebleSubdivisionTrack(sampleRate: Int, bpm: Double): FloatArray {
+        val samples = FloatArray(sampleRate * 28)
+        val beatInterval = (sampleRate * 60.0 / bpm).toInt()
+        val subdivisionInterval = (beatInterval / 2).coerceAtLeast(1)
+
+        var position = 0
+        while (position < samples.size) {
+            addSineBurst(samples, sampleRate, position, frequencyHz = 105.0, durationSeconds = 0.10, amplitude = 0.50)
+            position += beatInterval
+        }
+
+        position = 0
+        while (position < samples.size) {
+            addSineBurst(samples, sampleRate, position, frequencyHz = 5_500.0, durationSeconds = 0.015, amplitude = 1.00)
             position += subdivisionInterval
         }
 

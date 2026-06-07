@@ -18,6 +18,14 @@ struct Candidate {
     double score;
 };
 
+struct ScoreRow {
+    double bpm;
+    double full_score;
+    double low_score;
+    double peak_score;
+    double score;
+};
+
 std::vector<double> moving_average(const std::vector<double>& values, int window) {
     if (values.empty()) return {};
     std::vector<double> output(values.size(), 0.0);
@@ -79,6 +87,30 @@ std::vector<double> energy_envelope(const std::vector<float>& samples, int sampl
     return positive_normalize(moving_average(energies, window));
 }
 
+std::vector<double> low_band_envelope(const std::vector<float>& samples, int sample_rate) {
+    const int frame_count = std::max(0, static_cast<int>(samples.size()) - kFrameSize) / kHopSize + 1;
+    std::vector<double> energies(frame_count, 0.0);
+    if (sample_rate <= 0 || frame_count <= 0) return energies;
+
+    constexpr double cutoff_hz = 180.0;
+    const double alpha = std::exp(-2.0 * M_PI * cutoff_hz / sample_rate);
+    double low = 0.0;
+
+    for (int frame = 0; frame < frame_count; ++frame) {
+        const int start = frame * kHopSize;
+        const int end = std::min(start + kFrameSize, static_cast<int>(samples.size()));
+        double sum = 0.0;
+        for (int i = start; i < end; ++i) {
+            low = (1.0 - alpha) * static_cast<double>(samples[i]) + alpha * low;
+            sum += low * low;
+        }
+        energies[frame] = std::sqrt(sum / std::max(1, end - start));
+    }
+
+    const int window = std::max(3, (sample_rate / kHopSize) / 4);
+    return positive_normalize(moving_average(energies, window));
+}
+
 std::vector<double> onset_envelope(const std::vector<float>& samples, int sample_rate) {
     const auto energy = energy_envelope(samples, sample_rate);
     std::vector<double> flux(energy.size(), 0.0);
@@ -118,6 +150,17 @@ double autocorrelation_score(const std::vector<double>& values, int lag) {
     return score / std::sqrt(norm_a * norm_b);
 }
 
+double rhythm_score(
+    const std::vector<double>& values,
+    int lag,
+    double second_weight,
+    double third_weight
+) {
+    return autocorrelation_score(values, lag) +
+        second_weight * autocorrelation_score(values, lag * 2) +
+        third_weight * autocorrelation_score(values, lag * 3);
+}
+
 double fold_bpm(double bpm, int min_bpm, int max_bpm) {
     while (bpm < min_bpm) bpm *= 2.0;
     while (bpm > max_bpm) bpm /= 2.0;
@@ -132,6 +175,28 @@ double tempo_prior(double bpm) {
     if (bpm <= 182.0) return 0.96;
     if (bpm <= 200.0) return 0.62;
     return 0.35;
+}
+
+double selection_weight(double bpm) {
+    if (bpm <= 184.0) return 1.0;
+    if (bpm <= 200.0) return 0.72;
+    return 0.5;
+}
+
+double subdivision_penalty(const ScoreRow& row, const std::map<int, ScoreRow>& rows_by_bpm) {
+    if (row.bpm < 185.0) return 1.0;
+    const int half = static_cast<int>(std::round(row.bpm / 2.0));
+    const auto half_it = rows_by_bpm.find(half);
+    if (half_it == rows_by_bpm.end()) return 1.0;
+
+    const ScoreRow& half_row = half_it->second;
+    const double half_combined =
+        half_row.full_score + 0.18 * half_row.low_score + 0.08 * half_row.peak_score;
+    const bool half_is_competitive = half_combined >= row.score * 0.68;
+    const bool half_has_stronger_low_pulse = half_row.low_score >= row.low_score * 1.08;
+    if (half_is_competitive && half_has_stronger_low_pulse) return 0.68;
+    if (row.bpm >= 190.0 && half_is_competitive) return 0.82;
+    return 1.0;
 }
 
 std::vector<Candidate> peak_interval_candidates(
@@ -192,24 +257,36 @@ std::vector<Candidate> estimate_tempo(
     if (envelope.size() < 8) return {};
 
     const double onset_rate = sample_rate / static_cast<double>(kHopSize);
-    std::vector<Candidate> scored;
+    const auto low_envelope = low_band_envelope(samples, sample_rate);
+    std::vector<ScoreRow> rows;
 
     for (double bpm = min_bpm; bpm <= max_bpm; bpm += 0.5) {
         const int lag = static_cast<int>(std::round(onset_rate * 60.0 / bpm));
         if (lag < 1 || lag >= static_cast<int>(envelope.size()) / 2) continue;
 
-        const double raw_score =
-            autocorrelation_score(envelope, lag) +
-            0.42 * autocorrelation_score(envelope, lag * 2) +
-            0.20 * autocorrelation_score(envelope, lag * 3);
-        const double score = raw_score * tempo_prior(bpm);
+        const double full_score = rhythm_score(envelope, lag, 0.42, 0.20);
+        const double low_score = rhythm_score(low_envelope, lag, 0.35, 0.15);
+        const double peak_score = 0.0;
+        const double score = full_score + 0.18 * low_score + 0.08 * peak_score;
 
         if (std::isfinite(score) && score > 0.0) {
-            scored.push_back({bpm, score});
+            rows.push_back({bpm, full_score, low_score, peak_score, score});
         }
     }
 
-    if (scored.empty()) return peak_interval_candidates(envelope, onset_rate, min_bpm, max_bpm);
+    if (rows.empty()) return peak_interval_candidates(envelope, onset_rate, min_bpm, max_bpm);
+
+    std::map<int, ScoreRow> rows_by_bpm;
+    for (const auto& row : rows) {
+        rows_by_bpm[static_cast<int>(std::round(row.bpm))] = row;
+    }
+    std::vector<Candidate> scored;
+    scored.reserve(rows.size());
+    for (const auto& row : rows) {
+        const double score =
+            row.score * tempo_prior(row.bpm) * selection_weight(row.bpm) * subdivision_penalty(row, rows_by_bpm);
+        scored.push_back({row.bpm, score});
+    }
 
     const double max_score = std::max(0.000001, std::max_element(
         scored.begin(),

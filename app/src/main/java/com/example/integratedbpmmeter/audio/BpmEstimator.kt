@@ -1,6 +1,7 @@
 package com.example.integratedbpmmeter.audio
 
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -20,42 +21,53 @@ class BpmEstimator(
         val envelope = combinedEnvelope(samples, sampleRate)
         if (envelope.size < 8) return emptyList()
 
+        val lowEnvelope = lowBandEnvelope(samples, sampleRate)
         val onsetRate = sampleRate.toDouble() / HOP_SIZE
         val peakSupport = peakTempoSupport(envelope, onsetRate)
-        val scores = mutableListOf<Pair<Double, Double>>()
+        val rows = mutableListOf<TempoScoreRow>()
 
         for (bpm in minBpm..maxBpm) {
             val lag = (onsetRate * 60.0 / bpm).roundToInt()
             if (lag < 1 || lag >= envelope.size / 2) continue
 
-            val score = autocorrelationScore(envelope, lag) +
-                0.45 * autocorrelationScore(envelope, lag * 2) +
-                0.25 * autocorrelationScore(envelope, lag * 3) +
-                0.08 * (peakSupport[bpm] ?: 0.0)
+            val fullScore = rhythmScore(envelope, lag)
+            val lowScore = rhythmScore(lowEnvelope, lag, secondWeight = 0.35, thirdWeight = 0.15)
+            val peakScore = peakSupport[bpm] ?: 0.0
+            val score = fullScore + 0.18 * lowScore + 0.08 * peakScore
 
             if (score.isFinite() && score > 0.0) {
-                scores += bpm.toDouble() to score
+                rows += TempoScoreRow(
+                    bpm = bpm,
+                    fullScore = fullScore,
+                    lowScore = lowScore,
+                    peakScore = peakScore,
+                    score = score
+                )
             }
         }
 
-        if (scores.isEmpty()) return estimateFromPeaks(envelope, onsetRate)
+        if (rows.isEmpty()) return estimateFromPeaks(envelope, onsetRate)
 
-        val maxScore = scores.maxOf { adjustedScore(it) }.coerceAtLeast(0.000001)
-        val localMaxima = scores.filterIndexed { index, item ->
-            val previous = scores.getOrNull(index - 1)?.second ?: Double.NEGATIVE_INFINITY
-            val next = scores.getOrNull(index + 1)?.second ?: Double.NEGATIVE_INFINITY
-            item.second >= previous && item.second >= next
+        val scoreByBpm = rows.associateBy { it.bpm }
+        val scoredRows = rows.map { row ->
+            row.copy(score = adjustedScore(row, scoreByBpm))
+        }
+        val maxScore = scoredRows.maxOf { it.score }.coerceAtLeast(0.000001)
+        val localMaxima = scoredRows.filterIndexed { index, item ->
+            val previous = scoredRows.getOrNull(index - 1)?.score ?: Double.NEGATIVE_INFINITY
+            val next = scoredRows.getOrNull(index + 1)?.score ?: Double.NEGATIVE_INFINITY
+            item.score >= previous && item.score >= next
         }
 
         val ranked = localMaxima
-            .sortedByDescending { adjustedScore(it) }
-            .fold(mutableListOf<BpmCandidate>()) { selected, item ->
-                val bpm = item.first
+            .sortedByDescending { it.score }
+            .fold(mutableListOf<BpmCandidate>()) { selected, row ->
+                val bpm = row.bpm.toDouble()
                 val alreadyCovered = selected.any { abs(it.bpm - bpm) < 3.0 }
                 if (!alreadyCovered) {
                     selected += BpmCandidate(
                         bpm = bpm,
-                        confidence = (adjustedScore(item) / maxScore).coerceIn(0.0, 1.0)
+                        confidence = (row.score / maxScore).coerceIn(0.0, 1.0)
                     )
                 }
                 selected
@@ -64,15 +76,15 @@ class BpmEstimator(
         val filled = if (ranked.size >= 3) {
             ranked
         } else {
-            scores
-                .sortedByDescending { adjustedScore(it) }
-                .fold(ranked.toMutableList()) { selected, item ->
-                    val bpm = item.first
+            scoredRows
+                .sortedByDescending { it.score }
+                .fold(ranked.toMutableList()) { selected, row ->
+                    val bpm = row.bpm.toDouble()
                     val alreadyCovered = selected.any { abs(it.bpm - bpm) < 3.0 }
                     if (!alreadyCovered) {
                         selected += BpmCandidate(
                             bpm = bpm,
-                            confidence = (adjustedScore(item) / maxScore * 0.85).coerceIn(0.05, 1.0)
+                            confidence = (row.score / maxScore * 0.85).coerceIn(0.05, 1.0)
                         )
                     }
                     selected
@@ -82,8 +94,33 @@ class BpmEstimator(
         return filled.take(3)
     }
 
-    private fun adjustedScore(item: Pair<Double, Double>): Double {
-        return item.second * selectionWeight(item.first)
+    private fun adjustedScore(row: TempoScoreRow, rowsByBpm: Map<Int, TempoScoreRow>): Double {
+        return row.score * selectionWeight(row.bpm.toDouble()) * subdivisionPenalty(row, rowsByBpm)
+    }
+
+    private fun rhythmScore(
+        values: DoubleArray,
+        lag: Int,
+        secondWeight: Double = 0.45,
+        thirdWeight: Double = 0.25
+    ): Double {
+        return autocorrelationScore(values, lag) +
+            secondWeight * autocorrelationScore(values, lag * 2) +
+            thirdWeight * autocorrelationScore(values, lag * 3)
+    }
+
+    private fun subdivisionPenalty(row: TempoScoreRow, rowsByBpm: Map<Int, TempoScoreRow>): Double {
+        if (row.bpm < 185) return 1.0
+        val half = (row.bpm / 2.0).roundToInt()
+        val halfRow = rowsByBpm[half] ?: return 1.0
+        val halfCombined = halfRow.fullScore + 0.18 * halfRow.lowScore + 0.08 * halfRow.peakScore
+        val halfIsCompetitive = halfCombined >= row.score * 0.68
+        val halfHasStrongerLowPulse = halfRow.lowScore >= row.lowScore * 1.08
+        return when {
+            halfIsCompetitive && halfHasStrongerLowPulse -> 0.68
+            row.bpm >= 190 && halfIsCompetitive -> 0.82
+            else -> 1.0
+        }
     }
 
     private fun selectionWeight(bpm: Double): Double {
@@ -103,6 +140,29 @@ class BpmEstimator(
         return DoubleArray(size) { index ->
             max(onset[index], energy[index] * 0.55)
         }
+    }
+
+    private fun lowBandEnvelope(samples: FloatArray, sampleRate: Int): DoubleArray {
+        val frameCount = ((samples.size - FRAME_SIZE).coerceAtLeast(0) / HOP_SIZE) + 1
+        if (frameCount <= 0 || sampleRate <= 0) return DoubleArray(0)
+
+        val cutoffHz = 180.0
+        val alpha = exp(-2.0 * Math.PI * cutoffHz / sampleRate)
+        val energies = DoubleArray(frameCount)
+        var low = 0.0
+
+        for (frame in 0 until frameCount) {
+            val start = frame * HOP_SIZE
+            val end = (start + FRAME_SIZE).coerceAtMost(samples.size)
+            var sum = 0.0
+            for (index in start until end) {
+                low = (1.0 - alpha) * samples[index] + alpha * low
+                sum += low * low
+            }
+            energies[frame] = sqrt(sum / max(1, end - start))
+        }
+
+        return positiveNormalize(movingAverage(energies, window = max(3, (sampleRate / HOP_SIZE) / 4)))
     }
 
     private fun onsetEnvelope(samples: FloatArray, sampleRate: Int): DoubleArray {
@@ -285,4 +345,12 @@ class BpmEstimator(
         private const val FRAME_SIZE = 1024
         private const val HOP_SIZE = 512
     }
+
+    private data class TempoScoreRow(
+        val bpm: Int,
+        val fullScore: Double,
+        val lowScore: Double,
+        val peakScore: Double,
+        val score: Double
+    )
 }

@@ -11,6 +11,9 @@
 ## Highlights
 
 - Final UI/UX polish for the core product direction: Bpm Now is now framed as a fast Tap BPM confirmation app with workout-range library organization, not an automatic BPM oracle.
+- Automatic BPM extraction got a focused accuracy pass: both Kotlin and native tempo engines now consider a low-band kick/bass envelope so loud high-frequency subdivisions are less likely to be mistaken for the main beat.
+- Very fast 190-200 BPM candidates are downranked when the half-time pulse has stronger low-frequency support, while 180 BPM is still treated as a valid Running High Pace tempo.
+- Added a regression test for a 96 BPM bass pulse with louder 192 BPM treble subdivisions, matching the common “BPM is way too fast” failure mode.
 - Measure is simplified into the daily-use order: current song card, large album-art Tap BPM area, Reset/Save, compact Reference BPM result, and File Tap entry.
 - Library now shows the essential controls first: search, short smart-list chips, 160/170/180/custom BPM range presets, Play, and Share links.
 - Advanced Library tools such as source filters, local-file matching, Samsung playlist creation, Samsung Music launch, and M3U export are kept behind `More tools`.
