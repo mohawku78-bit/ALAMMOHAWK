@@ -1,52 +1,74 @@
-# Next Goal: Product-Quality BPM Meter v0.5
+# Next Goal: Bpm Now Daily-Use Beta
 
-## Goal
+## Product Direction
 
-Turn the redesigned native-tempo debug build into a trustworthy daily-use beta by validating BPM accuracy and UI ergonomics against real tracks on a real Android device.
+Bpm Now is not an automatic BPM oracle.
 
-## Execution Plan
+The core product is:
 
-1. Delivery and installability
-   - Produce a repeatable release folder containing APK, SHA-256 checksum, release notes, and install instructions.
-   - Keep filenames stable: `IntegratedBpmMeter-debug.apk`, `SHA256SUMS.txt`, `RELEASE_NOTES.md`.
+1. Detect the song the user is currently hearing when Android media access allows it.
+2. Give the user a large, fast Tap BPM surface.
+3. Save the BPM as a manually verified value.
+4. Organize saved tracks into workout-friendly BPM ranges.
+5. Treat public BPM and file analysis as references or drafts, not final answers.
 
-2. First-run experience
-   - Add clear permission status cards for notification listener access and record audio permission.
-   - Make Now Playing explain what works after notification access is enabled.
-   - Keep internal audio capture visually marked as experimental.
-   - Add a short first-run hint that Mic Listen requires speaker playback and will not hear headphones.
+This direction should guide every future change. Features that make the app look more automatic but less trustworthy should be deferred unless they clearly support manual confirmation.
 
-3. Smart library validation
-   - Save sample 82, 128, 145, and 170 BPM records on device.
-   - Confirm automatic categories, double-time hints, Running/Jogging/Cycling filters, Recently Saved, and Manually Verified.
-   - Confirm 160/170/180 playlist presets, custom min/max range filtering, and text playlist sharing.
-   - Check that category override editing feels quick enough after workout-style saving.
+## Current Long-Running Work
 
-4. BPM accuracy tuning
-   - Compare native tempo, Kotlin fallback, and public BPM reference on at least 20 real files using `QA_NOTES.md`.
-   - Record failures where half/double normalization chooses the wrong musical feel.
-   - Decide whether to vendor full aubio or attempt Essentia as a second native engine.
+Polish the daily loop:
 
-5. Export planning
-   - Add per-track YouTube Music search links as a lightweight v2 path.
-   - Keep Google login and YouTube Data API playlist creation for a separate v3 goal.
+1. Measure
+   - Keep current media title, artist, artwork, transport controls, Tap BPM, reference BPM, Reset, and Save as the main screen.
+   - Keep Tap BPM responsiveness as the highest priority.
+   - Keep file analysis secondary and label raw results as estimates.
 
-6. Real-device QA
-   - Install debug APK on a real Android 10+ device.
-   - Test Tap BPM sound on/off, Library save/edit/delete/sort, file picker metadata, file BPM analysis, Now Playing public lookup, shared audio open, experimental capture, and Settings persistence.
-   - Record failures in `QA_NOTES.md`.
+2. Save
+   - Tap and Now Playing saves should be trusted by default.
+   - File analysis, mic, and capture results should remain Needs Review until tap-checked.
+   - 180 BPM is valid and should stay in High Pace, with half-time feel shown when helpful.
 
-7. Design QA
-   - Check Measure, Library, and Settings on a small phone and a large phone.
-   - Verify long track titles, Korean metadata, public lookup results, and empty states do not crowd or overlap.
-   - Decide whether the recommended BPM card should add a waveform/onset confidence visualization after real-device testing.
+3. Library
+   - Make the default Library path simple: choose a BPM range, play linked files, share search links, review tap-check items.
+   - Hide source filters, Samsung playlist creation, local file matching, and M3U export behind More tools.
+   - Keep record cards compact: BPM, title, artist, category, source, and verification state.
+
+4. Export
+   - YouTube Music remains search-link/checklist based for now.
+   - Samsung Music remains MediaStore playlist creation when local files can be matched.
+   - M3U remains a generic compatible-player export, not the main Samsung path.
+
+5. File BPM
+   - Do not overstate accuracy.
+   - Prioritize saved verified matches and public references above raw file estimates.
+   - Future engine work should be benchmarked against real tracks before UI promises change.
+
+## Next Implementation Steps
+
+1. Finish Library language and layout cleanup.
+   - Default: Play and Share links.
+   - More tools: Find files, Try Samsung, Open app, M3U file.
+   - Tap-check records should be obvious and easy to filter.
+
+2. Add product-level QA coverage.
+   - Unit-test category boundaries, trust labels, double-time range matching, and source-filter behavior.
+   - Keep UI logic small enough that real-device QA remains practical.
+
+3. Refresh release artifacts.
+   - Run compile, unit tests, lint, and assemble.
+   - Copy the latest APK into `release/`.
+   - Refresh `SHA256SUMS.txt`, `INSTALL.md`, and release notes.
+
+4. Push after every stable checkpoint.
+   - Remote: `https://github.com/mohawku78-bit/ALAMMOHAWK.git`
+   - Branch: `main`
 
 ## Acceptance Criteria
 
-- Fresh clone/build can produce the APK with the commands in `HANDOFF.md`.
-- Release folder includes APK, checksum, release notes, and install instructions.
-- Unit tests pass.
-- Lint passes.
-- Debug APK installs on a real Android 10+ device.
-- At least three local audio files are analyzed and their candidate behavior is recorded.
-- At least one small-phone visual pass confirms the redesigned controls remain reachable.
+- Fresh clone can build the app with the commands in `HANDOFF.md`.
+- `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` pass.
+- Measure still prioritizes current media + Tap BPM.
+- Library default view is understandable without using advanced export tools.
+- File-analysis saves are clearly drafts or estimates unless tap-verified.
+- 160, 170, and 180 BPM playlist ranges work, including 70-90 BPM double-time matches.
+- Known limitations are documented rather than hidden behind optimistic UI wording.

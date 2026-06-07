@@ -251,6 +251,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = viewModel()) {
                 reviewCount = visibleReviewCount,
                 showAdvancedTools = showAdvancedLibraryTools,
                 onToggleAdvancedTools = { showAdvancedLibraryTools = !showAdvancedLibraryTools },
+                onShowReview = { viewModel.setListFilter(HistoryListFilter.REVIEW) },
                 onPreset = viewModel::setBpmPreset,
                 onMinChange = viewModel::setMinBpm,
                 onMaxChange = viewModel::setMaxBpm,
@@ -351,6 +352,7 @@ private fun BpmPlaylistRangePanel(
     reviewCount: Int,
     showAdvancedTools: Boolean,
     onToggleAdvancedTools: () -> Unit,
+    onShowReview: () -> Unit,
     onPreset: (BpmRangePreset) -> Unit,
     onMinChange: (String) -> Unit,
     onMaxChange: (String) -> Unit,
@@ -364,10 +366,23 @@ private fun BpmPlaylistRangePanel(
     localFileMatchStatus: String?
 ) {
     val activeRange = bpmRange.activeRange
-    val localStatusText = if (missingSamsungFileCount > 0) {
-        "$localFileCount ready / $missingSamsungFileCount to find"
+    val localStatusText = when {
+        localFileCount > 0 && missingSamsungFileCount > 0 -> {
+            "$localFileCount playable / $missingSamsungFileCount to link"
+        }
+        localFileCount > 0 -> "$localFileCount playable"
+        else -> "No linked files"
+    }
+    val rangeText = activeRange?.label() ?: "Choose a BPM range"
+    val summaryText = listOfNotNull(
+        "$recordCount tracks",
+        localStatusText,
+        if (reviewCount > 0) "$reviewCount need tap-check" else null
+    ).joinToString(" / ")
+    val rangeHelperText = if (activeRange != null) {
+        "Double-time matches are included when a 70-90 BPM track fits the selected running range."
     } else {
-        "$localFileCount ready"
+        "Use 160, 170, 180, or a custom min / max to build a workout list."
     }
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -385,16 +400,12 @@ private fun BpmPlaylistRangePanel(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "BPM playlist",
+                        text = "Workout BPM list",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = listOfNotNull(
-                            activeRange?.label() ?: "Pick a preset or enter min / max",
-                            localStatusText,
-                            if (reviewCount > 0) "$reviewCount need review" else null
-                        ).joinToString(" / "),
+                        text = "$rangeText / $summaryText",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -404,9 +415,17 @@ private fun BpmPlaylistRangePanel(
                 FilterChip(
                     selected = showAdvancedTools,
                     onClick = onToggleAdvancedTools,
-                    label = { Text("Advanced") }
+                    label = { Text("More tools") }
                 )
             }
+
+            Text(
+                text = rangeHelperText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
 
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -443,7 +462,51 @@ private fun BpmPlaylistRangePanel(
                     primary = true,
                     modifier = Modifier.weight(1f)
                 )
-                if (showAdvancedTools) {
+                PlaylistIconAction(
+                    enabled = recordCount > 0,
+                    onClick = onShare,
+                    icon = Icons.Filled.Share,
+                    label = "Share links",
+                    contentDescription = "Share text playlist with search links",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            if (reviewCount > 0) {
+                Surface(
+                    onClick = onShowReview,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "$reviewCount tracks need tap-check",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "Review",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            if (showAdvancedTools) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     PlaylistIconAction(
                         enabled = missingSamsungFileCount > 0,
                         onClick = onResolveLocalFiles,
@@ -456,14 +519,6 @@ private fun BpmPlaylistRangePanel(
                         },
                         modifier = Modifier.weight(1f)
                     )
-                }
-            }
-
-            if (showAdvancedTools) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
                     PlaylistIconAction(
                         enabled = recordCount > 0,
                         onClick = onCreateMusicPlaylist,
@@ -493,18 +548,10 @@ private fun BpmPlaylistRangePanel(
                         contentDescription = "Save playlist file for compatible players",
                         modifier = Modifier.weight(1f)
                     )
-                    PlaylistIconAction(
-                        enabled = recordCount > 0,
-                        onClick = onShare,
-                        icon = Icons.Filled.Share,
-                        label = "Text",
-                        contentDescription = "Share text playlist",
-                        modifier = Modifier.weight(1f)
-                    )
                 }
 
                 Text(
-                    text = "Samsung, M3U, text export, and source filters are advanced tools. Player support may vary.",
+                    text = "Samsung playlists, M3U files, local linking, and source filters are optional. Player support may vary.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
@@ -777,7 +824,7 @@ private fun LibraryHeader(
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
                     Text(
-                        text = "$reviewCount review",
+                        text = "$reviewCount tap-check",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
@@ -935,7 +982,7 @@ private fun ReviewRecordActionStrip(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Tap check needed",
+                text = "Tap-check before trusting this BPM",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold,

@@ -7,6 +7,8 @@
 - `:app:testDebugUnitTest`: passed
 - `:app:lintDebug`: passed after fixing permission lint, audio open intent lint, and launcher icon warning
 - `:app:assembleDebug`: passed
+- 2026-06-07 update: Library default playlist panel now shows the daily path as `Play` and `Share links`, moves Samsung/M3U/local-linking actions behind `More tools`, and adds a tap-check review callout for untrusted estimates.
+- 2026-06-07 update: `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` passed; refreshed `release/BpmNow-debug.apk`, `release/IntegratedBpmMeter-debug.apk`, and `release/BpmNow-release-package.zip`; latest APK SHA-256 is `3057E2C721A3C0DC7D0C238C81F4797A8C62016C6AECD407C7C13D598E43E42A`, and latest ZIP SHA-256 is `EB2C04E9995D9EC8B0588A99CE4F7E9427239842427F7C2232DF57B93707742A`.
 - 2026-06-06 update: added tests that fold 180 BPM double-time locks toward 90 BPM while keeping 160 BPM when it is not an obvious double-time family.
 - 2026-06-06 update: added selected-file preview playback and in-place manual Tap BPM controls to Measure.
 - 2026-06-06 update: added Paste Web BPM Answer parser and tests for English, Korean, and range snippets.

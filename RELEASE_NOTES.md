@@ -22,6 +22,7 @@
 - File Analyze no longer shows raw automatic file-analysis confidence as accuracy-like percentages; automatic candidates use `Estimate` or `Check`, while trusted saved/public/tap references keep normal confidence display.
 - Library now carries the same trust language forward after saving: raw file-analysis records show `Estimate` and `Needs tap-check` instead of confidence percentages, and the source label reads `File estimate` rather than `Native`.
 - Library now includes a `Needs Review` smart list so unverified file-analysis, mic, or capture estimates can be found later and corrected with Tap BPM instead of disappearing into the main saved list.
+- Library's BPM playlist panel now keeps the normal user path simple: choose a workout BPM range, play linked local tracks, share YouTube Music search links, and review tap-check items. Samsung playlist creation, local-file matching, app launching, and M3U export are tucked behind `More tools`.
 - Hybrid tempo agreement now preserves the native multi-segment agreement score instead of inflating it with candidate confidence.
 - Saved-reference matching now retries with a broader title token, fixing punctuation cases such as `She's Electric` where `she electric` did not match the raw SQL title text.
 - Now Playing web BPM references can be saved with title, artist, album, and source app package metadata.

@@ -12,6 +12,8 @@
 - Google Drive desktop copy: `G:\내 드라이브\Integrated BPM Meter\IntegratedBpmMeter-debug.apk`
 - Android package id: `com.example.integratedbpmmeter`
 - Android app label: `Bpm Now`
+- GitHub remote: `https://github.com/mohawku78-bit/ALAMMOHAWK.git`
+- Git branch: `main`
 - Minimum SDK: 29
 - Stack: Kotlin, Jetpack Compose, Material 3, MVVM, Room, Coroutines/Flow, Android NDK/CMake
 
@@ -164,6 +166,7 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-06 Library trust-label follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; latest APK installed on `SM_F946N`, and UI dump verified existing trusted media records still show percent confidence plus `Verified`.
 - Library now includes a `Needs Review` smart list that collects untrusted file-analysis, mic, and capture estimates for later tap-check correction.
 - Library rows that need review now show a quick `Mark verified` action in its own compact review strip. It opens a confirmation dialog with the BPM/title before the record leaves Needs Review, so tap-checked estimates can be trusted without crowding the row action icons.
+- Library's default BPM playlist panel now emphasizes the daily path: choose a workout BPM range, play linked files, share YouTube Music search links, and tap-check questionable records. Samsung playlist creation, local-file matching, app launch, and M3U export are behind `More tools`.
 - 2026-06-06 Needs Review follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; latest APK installed on `SM_F946N`, and UI dump verified `Needs Review` appears after `Manually Verified` in the Library smart-list filter row.
 - 2026-06-06 file-analysis merge follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; latest APK installed on `SM_F946N`, and UI dump verified the Measure screen still shows current media, Tap BPM, Reference BPM, and bottom tabs.
 - 2026-06-06 fallback scoring follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` stayed in ADB `offline` state after reconnect/server restart attempts.
@@ -198,6 +201,13 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 ## Next Engineer Prompt
 
 Continue from `C:\Users\svici\OneDrive\Documents\SAND\bpm`.
+
+If continuing from another computer:
+
+```powershell
+git clone https://github.com/mohawku78-bit/ALAMMOHAWK.git
+cd ALAMMOHAWK
+```
 
 First verify:
 
