@@ -167,6 +167,7 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - Library now includes a `Needs Review` smart list that collects untrusted file-analysis, mic, and capture estimates for later tap-check correction.
 - Library rows that need review now show a quick `Mark verified` action in its own compact review strip. It opens a confirmation dialog with the BPM/title before the record leaves Needs Review, so tap-checked estimates can be trusted without crowding the row action icons.
 - Library's default BPM playlist panel now emphasizes the daily path: choose a workout BPM range, play linked files, share YouTube Music search links, and tap-check questionable records. Samsung playlist creation, local-file matching, app launch, and M3U export are behind `More tools`.
+- Library smart-list and source-filter behavior is now covered by `HistoryLibraryFilterTest`, including double-time workout matching, Needs Review, recent-list capping, and Samsung/YouTube/local/other source separation.
 - 2026-06-06 Needs Review follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; latest APK installed on `SM_F946N`, and UI dump verified `Needs Review` appears after `Manually Verified` in the Library smart-list filter row.
 - 2026-06-06 file-analysis merge follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; latest APK installed on `SM_F946N`, and UI dump verified the Measure screen still shows current media, Tap BPM, Reference BPM, and bottom tabs.
 - 2026-06-06 fallback scoring follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` stayed in ADB `offline` state after reconnect/server restart attempts.
@@ -174,8 +175,8 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-07 Library review-strip follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 verification confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 File Analyze estimate-save confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
-- Latest release APK SHA-256 is `4E3603EA511D6E48ADDF37164F8D43BDA0EEC1D877630BA833CDB06D48E759C5`.
-- Latest clean release bundle SHA-256 is `8189E6A5037B84F09AFFF133A30659632B9DA82DD6A5F0D42346CB81E359DB16`.
+- Latest release APK SHA-256 is `3C21AD76C24C3160B0565939D4822748847E65338DBFA8ED02EA48923F207EEC`.
+- Latest clean release bundle SHA-256 is `5B9D6DE87176634D92B336ED53DABFC2E9EE30B2421159A88200C0E006944FAC`.
 - `QA_NOTES.md` records automated checks and real-device checklist.
 
 ## Known Limitations

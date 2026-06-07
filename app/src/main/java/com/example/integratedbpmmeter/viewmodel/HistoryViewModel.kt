@@ -759,26 +759,27 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    private fun List<BpmRecord>.filterBySmartList(filter: HistoryListFilter): List<BpmRecord> {
-        return when (filter) {
-            HistoryListFilter.ALL -> this
-            HistoryListFilter.RUNNING -> filter {
-                it.bpm in 160.0..180.0 || it.bpm.doubleTimeCompatibleBpm()?.let { value -> value in 160.0..180.0 } == true
-            }
-            HistoryListFilter.JOGGING -> filter {
-                it.bpm in 140.0..159.0 || it.bpm.doubleTimeCompatibleBpm()?.let { value -> value in 140.0..159.0 } == true
-            }
-            HistoryListFilter.CYCLING -> filter { it.bpm in 80.0..100.0 }
-            HistoryListFilter.DOUBLE_TIME -> filter { it.effectiveCategory() == BpmSmartCategory.LOW_DOUBLE_TIME }
-            HistoryListFilter.WARM_UP -> filter { it.effectiveCategory() == BpmSmartCategory.WARM_UP_COOL_DOWN }
-            HistoryListFilter.RECENT -> sortedByDescending { it.createdAt }.take(30)
-            HistoryListFilter.VERIFIED -> filter { it.manuallyVerified }
-            HistoryListFilter.REVIEW -> filter { it.needsBpmReview() }
+}
+
+internal fun List<BpmRecord>.filterBySmartList(filter: HistoryListFilter): List<BpmRecord> {
+    return when (filter) {
+        HistoryListFilter.ALL -> this
+        HistoryListFilter.RUNNING -> filter {
+            it.bpm in 160.0..180.0 || it.bpm.doubleTimeCompatibleBpm()?.let { value -> value in 160.0..180.0 } == true
         }
+        HistoryListFilter.JOGGING -> filter {
+            it.bpm in 140.0..159.0 || it.bpm.doubleTimeCompatibleBpm()?.let { value -> value in 140.0..159.0 } == true
+        }
+        HistoryListFilter.CYCLING -> filter { it.bpm in 80.0..100.0 }
+        HistoryListFilter.DOUBLE_TIME -> filter { it.effectiveCategory() == BpmSmartCategory.LOW_DOUBLE_TIME }
+        HistoryListFilter.WARM_UP -> filter { it.effectiveCategory() == BpmSmartCategory.WARM_UP_COOL_DOWN }
+        HistoryListFilter.RECENT -> sortedByDescending { it.createdAt }.take(30)
+        HistoryListFilter.VERIFIED -> filter { it.manuallyVerified }
+        HistoryListFilter.REVIEW -> filter { it.needsBpmReview() }
     }
 }
 
-private fun BpmRecord.matchesSourceFilter(filter: HistorySourceFilter): Boolean {
+internal fun BpmRecord.matchesSourceFilter(filter: HistorySourceFilter): Boolean {
     return when (filter) {
         HistorySourceFilter.ALL -> true
         HistorySourceFilter.SAMSUNG_MUSIC -> sourceAppPackage.isSamsungMusicPackage()
