@@ -10,6 +10,13 @@
 
 ## Highlights
 
+- Final UI/UX polish for the core product direction: Bpm Now is now framed as a fast Tap BPM confirmation app with workout-range library organization, not an automatic BPM oracle.
+- Measure is simplified into the daily-use order: current song card, large album-art Tap BPM area, Reset/Save, compact Reference BPM result, and File Tap entry.
+- Library now shows the essential controls first: search, short smart-list chips, 160/170/180/custom BPM range presets, Play, and Share links.
+- Advanced Library tools such as source filters, local-file matching, Samsung playlist creation, Samsung Music launch, and M3U export are kept behind `More tools`.
+- File Analyze is now presented as File Tap. Automatic BPM output is treated as an estimate/draft, while tap-confirmed BPM remains the trusted saved value.
+- Settings is reorganized into Permissions, Tap & Measure, and Advanced sections, with mic/capture described as optional or experimental fallback features.
+- The latest build passed Kotlin compile, unit tests, lint, and debug APK assembly, then installed successfully over wireless ADB on Galaxy Tab `SM_T970`.
 - Redesigned navigation around three tabs: Measure, Library, and Settings.
 - Measure is now centered on Now Playing: current media metadata, manual Tap BPM, direct public BPM lookup, Google search fallback, and pasted web/AI BPM references are the primary workflow.
 - File Analyze is kept as a secondary workflow for local files and shared/opened audio.

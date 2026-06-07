@@ -21,6 +21,7 @@ class BpmEstimator(
         if (envelope.size < 8) return emptyList()
 
         val onsetRate = sampleRate.toDouble() / HOP_SIZE
+        val peakSupport = peakTempoSupport(envelope, onsetRate)
         val scores = mutableListOf<Pair<Double, Double>>()
 
         for (bpm in minBpm..maxBpm) {
@@ -29,7 +30,8 @@ class BpmEstimator(
 
             val score = autocorrelationScore(envelope, lag) +
                 0.45 * autocorrelationScore(envelope, lag * 2) +
-                0.25 * autocorrelationScore(envelope, lag * 3)
+                0.25 * autocorrelationScore(envelope, lag * 3) +
+                0.08 * (peakSupport[bpm] ?: 0.0)
 
             if (score.isFinite() && score > 0.0) {
                 scores += bpm.toDouble() to score
@@ -202,31 +204,11 @@ class BpmEstimator(
 
     private fun estimateFromPeaks(values: DoubleArray, onsetRate: Double): List<BpmCandidate> {
         if (values.size < 8) return emptyList()
-        val threshold = values.average() + sqrt(values.map { it * it }.average()) * 0.35
-        val peaks = mutableListOf<Int>()
-
-        for (index in 1 until values.lastIndex) {
-            if (
-                values[index] >= threshold &&
-                values[index] >= values[index - 1] &&
-                values[index] >= values[index + 1]
-            ) {
-                peaks += index
-            }
-        }
-
+        val peaks = detectPeaks(values, onsetRate)
         if (peaks.size < 3) return emptyList()
 
-        val counts = mutableMapOf<Int, Int>()
-        for (index in 1 until peaks.size) {
-            val interval = peaks[index] - peaks[index - 1]
-            if (interval <= 0) continue
-            val bpm = (onsetRate * 60.0 / interval).roundToInt()
-            val folded = foldIntoRange(bpm)
-            if (folded in minBpm..maxBpm) {
-                counts[folded] = (counts[folded] ?: 0) + 1
-            }
-        }
+        val counts = peakTempoCounts(peaks, onsetRate)
+        if (counts.isEmpty()) return emptyList()
 
         val maxCount = counts.values.maxOrNull() ?: return emptyList()
         return counts
@@ -236,9 +218,60 @@ class BpmEstimator(
             .map {
                 BpmCandidate(
                     bpm = it.key.toDouble(),
-                    confidence = (it.value.toDouble() / maxCount * 0.55).coerceIn(0.05, 0.55)
+                    confidence = (it.value / maxCount * 0.55).coerceIn(0.05, 0.55)
                 )
             }
+    }
+
+    private fun peakTempoSupport(values: DoubleArray, onsetRate: Double): Map<Int, Double> {
+        val peaks = detectPeaks(values, onsetRate)
+        if (peaks.size < 3) return emptyMap()
+        val counts = peakTempoCounts(peaks, onsetRate)
+        val maxCount = counts.values.maxOrNull()?.coerceAtLeast(0.000001) ?: return emptyMap()
+        return counts.mapValues { (_, value) -> (value / maxCount).coerceIn(0.0, 1.0) }
+    }
+
+    private fun detectPeaks(values: DoubleArray, onsetRate: Double): List<Int> {
+        if (values.size < 8) return emptyList()
+        val threshold = values.average() + sqrt(values.map { it * it }.average()) * 0.35
+        val minPeakDistance = (onsetRate * 60.0 / maxBpm * 0.45).roundToInt().coerceAtLeast(1)
+        val peaks = mutableListOf<Int>()
+
+        for (index in 1 until values.lastIndex) {
+            if (
+                values[index] >= threshold &&
+                values[index] >= values[index - 1] &&
+                values[index] >= values[index + 1]
+            ) {
+                val previous = peaks.lastOrNull()
+                if (previous == null || index - previous >= minPeakDistance) {
+                    peaks += index
+                } else if (values[index] > values[previous]) {
+                    peaks[peaks.lastIndex] = index
+                }
+            }
+        }
+
+        return peaks
+    }
+
+    private fun peakTempoCounts(peaks: List<Int>, onsetRate: Double): Map<Int, Double> {
+        val counts = mutableMapOf<Int, Double>()
+        for (startIndex in peaks.indices) {
+            val maxEnd = (startIndex + 4).coerceAtMost(peaks.lastIndex)
+            for (endIndex in (startIndex + 1)..maxEnd) {
+                val interval = peaks[endIndex] - peaks[startIndex]
+                if (interval <= 0) continue
+                val bpm = (onsetRate * 60.0 / interval).roundToInt()
+                val folded = foldIntoRange(bpm)
+                if (folded in minBpm..maxBpm) {
+                    val distance = endIndex - startIndex
+                    val weight = 1.0 / distance.toDouble()
+                    counts[folded] = (counts[folded] ?: 0.0) + weight
+                }
+            }
+        }
+        return counts
     }
 
     private fun foldIntoRange(value: Int): Int {

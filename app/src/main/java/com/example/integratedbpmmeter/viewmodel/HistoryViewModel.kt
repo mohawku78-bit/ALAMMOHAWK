@@ -58,13 +58,13 @@ enum class HistorySortMode(val label: String) {
 
 enum class HistoryListFilter(val label: String) {
     ALL("All"),
-    RUNNING("Running 160-180"),
-    JOGGING("Jogging 140-159"),
-    CYCLING("Cycling 80-100"),
-    DOUBLE_TIME("Double-time 70-90"),
+    RUNNING("Running"),
+    JOGGING("Jogging"),
+    CYCLING("Cycling"),
+    DOUBLE_TIME("Double-time"),
     WARM_UP("Warm-up"),
-    RECENT("Recently Saved"),
-    VERIFIED("Manually Verified"),
+    RECENT("Recent"),
+    VERIFIED("Verified"),
     REVIEW("Needs Review")
 }
 

@@ -68,6 +68,18 @@ class BpmEstimatorTest {
         )
     }
 
+    @Test
+    fun peakIntervalSupportKeepsTempoWhenSomeBeatsAreMissing() {
+        val sampleRate = 44_100
+        val candidates = BpmEstimator().estimate(missingBeatTrack(sampleRate, bpm = 128.0), sampleRate)
+
+        assertFalse(candidates.isEmpty())
+        assertTrue(
+            "Expected 128 BPM candidate despite missing beats: $candidates",
+            candidates.any { abs(it.bpm - 128.0) <= 5.0 }
+        )
+    }
+
     private fun pulseTrack(sampleRate: Int, bpm: Double): FloatArray {
         val samples = FloatArray(sampleRate * 24)
         val interval = (sampleRate * 60.0 / bpm).toInt()
@@ -99,6 +111,23 @@ class BpmEstimatorTest {
             }
             position += subdivisionInterval
             subdivision++
+        }
+
+        return samples
+    }
+
+    private fun missingBeatTrack(sampleRate: Int, bpm: Double): FloatArray {
+        val samples = FloatArray(sampleRate * 28)
+        val beatInterval = (sampleRate * 60.0 / bpm).toInt()
+
+        var position = 0
+        var beat = 0
+        while (position < samples.size) {
+            if (beat % 4 != 3) {
+                addSineBurst(samples, sampleRate, position, frequencyHz = 120.0, durationSeconds = 0.07, amplitude = 0.95)
+            }
+            position += beatInterval
+            beat++
         }
 
         return samples

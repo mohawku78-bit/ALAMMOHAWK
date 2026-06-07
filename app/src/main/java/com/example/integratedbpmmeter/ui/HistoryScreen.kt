@@ -206,12 +206,29 @@ fun HistoryScreen(viewModel: HistoryViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(HistoryListFilter.values().toList()) { filter ->
+                items(primaryLibraryFilters) { filter ->
                     FilterChip(
                         selected = listFilter == filter,
                         onClick = { viewModel.setListFilter(filter) },
                         label = { Text(filter.label(libraryStats)) }
                     )
+                }
+            }
+        }
+
+        if (showAdvancedLibraryTools || listFilter in secondaryLibraryFilters) {
+            item {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(secondaryLibraryFilters) { filter ->
+                        FilterChip(
+                            selected = listFilter == filter,
+                            onClick = { viewModel.setListFilter(filter) },
+                            label = { Text(filter.label(libraryStats)) }
+                        )
+                    }
                 }
             }
         }
@@ -343,6 +360,21 @@ private enum class AudioPermissionAction {
     CreateMusicPlaylist
 }
 
+private val primaryLibraryFilters = listOf(
+    HistoryListFilter.ALL,
+    HistoryListFilter.RUNNING,
+    HistoryListFilter.JOGGING,
+    HistoryListFilter.CYCLING,
+    HistoryListFilter.DOUBLE_TIME,
+    HistoryListFilter.VERIFIED,
+    HistoryListFilter.REVIEW
+)
+
+private val secondaryLibraryFilters = listOf(
+    HistoryListFilter.WARM_UP,
+    HistoryListFilter.RECENT
+)
+
 @Composable
 private fun BpmPlaylistRangePanel(
     bpmRange: HistoryBpmRangeState,
@@ -366,6 +398,8 @@ private fun BpmPlaylistRangePanel(
     localFileMatchStatus: String?
 ) {
     val activeRange = bpmRange.activeRange
+    var customInputsVisible by remember { mutableStateOf(false) }
+    val showCustomInputs = customInputsVisible || (activeRange != null && bpmRange.preset == null)
     val localStatusText = when {
         localFileCount > 0 && missingSamsungFileCount > 0 -> {
             "$localFileCount playable / $missingSamsungFileCount to link"
@@ -434,15 +468,28 @@ private fun BpmPlaylistRangePanel(
                 items(BpmRangePreset.values().toList()) { preset ->
                     FilterChip(
                         selected = bpmRange.preset == preset,
-                        onClick = { onPreset(preset) },
+                        onClick = {
+                            customInputsVisible = false
+                            onPreset(preset)
+                        },
                         label = { Text(preset.chipLabel) }
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = showCustomInputs,
+                        onClick = { customInputsVisible = !customInputsVisible },
+                        label = { Text("Custom") }
                     )
                 }
                 if (activeRange != null) {
                     item {
                         FilterChip(
                             selected = false,
-                            onClick = onClear,
+                            onClick = {
+                                customInputsVisible = false
+                                onClear()
+                            },
                             label = { Text("Clear") }
                         )
                     }
@@ -559,26 +606,28 @@ private fun BpmPlaylistRangePanel(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = bpmRange.minText,
-                    onValueChange = onMinChange,
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Min BPM") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
-                OutlinedTextField(
-                    value = bpmRange.maxText,
-                    onValueChange = onMaxChange,
-                    modifier = Modifier.weight(1f),
-                    label = { Text("Max BPM") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
+            if (showCustomInputs) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = bpmRange.minText,
+                        onValueChange = onMinChange,
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Min BPM") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                    OutlinedTextField(
+                        value = bpmRange.maxText,
+                        onValueChange = onMaxChange,
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Max BPM") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                }
             }
             if (!localFileMatchStatus.isNullOrBlank()) {
                 Text(

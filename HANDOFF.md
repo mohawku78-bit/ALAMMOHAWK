@@ -12,6 +12,8 @@
 - Google Drive desktop copy: `G:\내 드라이브\Integrated BPM Meter\IntegratedBpmMeter-debug.apk`
 - Android package id: `com.example.integratedbpmmeter`
 - Android app label: `Bpm Now`
+- Latest APK SHA-256: `F75A69EFF1618D78F659B8FFF2B42C214D73388907C92F36081BB676D3424A03`
+- Latest release ZIP SHA-256: `B64CFB302EAD06017ADA4DDF619D678A272AC227B7D90137010F5F7863E90128`
 - GitHub remote: `https://github.com/mohawku78-bit/ALAMMOHAWK.git`
 - Git branch: `main`
 - Minimum SDK: 29
@@ -20,6 +22,12 @@
 ## Implemented Features
 
 - Three-tab navigation for Measure, Library, and Settings.
+- Final UI polish pass makes the everyday flow explicit: Measure for current song + Tap BPM, Library for workout BPM ranges, Settings for permissions/advanced controls, and File Tap as a secondary file-listening/tapping workflow.
+- Common Compose UI primitives now standardize cards, chips, action buttons, icon buttons, spacing, and compact info rows across the polished screens.
+- Measure is ordered as current song card, large album-art Tap BPM pad, Reset/Save, compact Reference BPM result, and File Tap entry.
+- Library default controls now prioritize search, short smart-list chips, 160/170/180/custom BPM range presets, Play, and Share links. Source filters, Samsung playlist tools, local-file matching, and M3U export stay behind `More tools`.
+- File Analyze is now presented as File Tap. Automatic file-analysis results are estimates/drafts and should be tap-checked before becoming trusted library BPM.
+- Settings is grouped into `Permissions`, `Tap & Measure`, and `Advanced`, with mic/capture clearly treated as optional fallback/experimental features.
 - Measure is Now Playing first: it reads current media metadata, supports manual Tap BPM, performs direct public BPM lookup, opens a Google BPM search fallback, parses pasted web/AI BPM text, and saves results with media metadata.
 - File Analyze is secondary and remains available from Measure or incoming `audio/*` share/open intents.
 - Measure has a workbench-style Compose redesign: selected file, analysis status, recommended BPM, confidence, engine diagnostics, save, half/double, and tap correction are grouped by task priority.
@@ -102,10 +110,10 @@
 
 ## Build Commands
 
-Use Java 17 from Android Studio:
+Use a JDK 17+ runtime. This machine currently builds with Microsoft JDK 21:
 
 ```powershell
-$env:JAVA_HOME='C:\Program Files\Android\Android Studio1\jbr'
+$env:JAVA_HOME='C:\Users\svici\.jdks\ms-21.0.10'
 .\gradlew.bat --no-daemon :app:compileDebugKotlin
 .\gradlew.bat --no-daemon :app:testDebugUnitTest
 .\gradlew.bat --no-daemon :app:lintDebug
@@ -120,6 +128,8 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - `:app:testDebugUnitTest` succeeded.
 - `:app:lintDebug` succeeded.
 - `:app:assembleDebug` succeeded.
+- 2026-06-07 final UI polish passed `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug` with Microsoft JDK 21.
+- 2026-06-07 latest build installed successfully over wireless ADB on Galaxy Tab `SM_T970`; UI screenshots/dumps verified Measure, Library, Settings, and File Tap after the final polish pass.
 - Debug APK was produced at `app/build/outputs/apk/debug/app-debug.apk`.
 - APK was copied to Google Drive desktop folder as `IntegratedBpmMeter-debug.apk`.
 - 2026-06-06 latest build installed successfully on connected `SM_F946N` via `adb install -r` and launched with `monkey`.
@@ -175,8 +185,8 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-07 Library review-strip follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 verification confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 File Analyze estimate-save confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
-- Latest release APK SHA-256 is `3C21AD76C24C3160B0565939D4822748847E65338DBFA8ED02EA48923F207EEC`.
-- Latest clean release bundle SHA-256 is `5B9D6DE87176634D92B336ED53DABFC2E9EE30B2421159A88200C0E006944FAC`.
+- Latest release APK SHA-256 is `F75A69EFF1618D78F659B8FFF2B42C214D73388907C92F36081BB676D3424A03`.
+- Latest clean release bundle SHA-256 is `B64CFB302EAD06017ADA4DDF619D678A272AC227B7D90137010F5F7863E90128`.
 - `QA_NOTES.md` records automated checks and real-device checklist.
 
 ## Known Limitations
@@ -213,7 +223,7 @@ cd ALAMMOHAWK
 First verify:
 
 ```powershell
-$env:JAVA_HOME='C:\Program Files\Android\Android Studio1\jbr'
+$env:JAVA_HOME='C:\Users\svici\.jdks\ms-21.0.10'
 .\gradlew.bat --no-daemon :app:testDebugUnitTest
 .\gradlew.bat --no-daemon :app:lintDebug
 .\gradlew.bat --no-daemon :app:assembleDebug

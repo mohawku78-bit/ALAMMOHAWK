@@ -118,8 +118,13 @@ fun NowPlayingScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, top = 32.dp, end = 16.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(
+                start = AppUi.ScreenPadding,
+                top = 28.dp,
+                end = AppUi.ScreenPadding,
+                bottom = AppUi.ScreenPadding
+            ),
+        verticalArrangement = Arrangement.spacedBy(AppUi.SectionGap)
     ) {
         if (!uiState.hasNotificationAccess) {
             PermissionStatusCard(
@@ -169,36 +174,21 @@ fun NowPlayingScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            OutlinedButton(
+            IconActionButton(
+                label = "Reset",
                 onClick = viewModel::resetTap,
+                icon = Icons.Filled.Refresh,
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Box(modifier = Modifier.width(8.dp))
-                Text("Reset")
-            }
-            Button(
+            )
+            PrimaryActionButton(
+                label = if (uiState.isSaving) "Saving" else "Save BPM",
                 onClick = viewModel::saveCurrent,
+                icon = Icons.Filled.CheckCircle,
                 modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
+                    .weight(1f),
                 enabled = snapshot.bpm != null && !uiState.isSaving
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Box(modifier = Modifier.width(8.dp))
-                Text(if (uiState.isSaving) "Saving" else "Save BPM")
-            }
+            )
         }
 
         NowPlayingReferenceResultCard(
@@ -209,27 +199,12 @@ fun NowPlayingScreen(
             localMatches = uiState.localBpmMatches
         )
 
-        OutlinedButton(
+        IconActionButton(
+            label = "File Tap",
             onClick = onFileAnalyze,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-            ) {
-            Icon(
-                imageVector = Icons.Filled.FolderOpen,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp)
-            )
-            Box(modifier = Modifier.width(10.dp))
-            Text("File Tap")
-            Box(modifier = Modifier.width(10.dp))
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp)
-            )
-        }
+            icon = Icons.Filled.FolderOpen,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         uiState.statusMessage?.let {
             Text(
@@ -396,14 +371,9 @@ private fun NowPlayingReferenceResultCard(
     val detailLine = detailText
     val sourceColor = if (publicCandidate != null) Color(0xFF007A6E) else Color(0xFF4E6D68)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    SectionCard(
+        contentPadding = 12.dp
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -465,7 +435,6 @@ private fun NowPlayingReferenceResultCard(
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }
-        }
     }
 }
 @Composable
@@ -551,25 +520,9 @@ fun FileAnalyzeScreen(
             )
         }
 
-        PublicBpmLookupCard(
-            metadata = metadata,
-            isLookingUp = uiState.isLookingUpPublicBpm,
-            statusMessage = uiState.publicBpmStatusMessage,
-            candidates = uiState.publicBpmCandidates,
-            onLookup = viewModel::lookupPublicBpm,
-            onUse = viewModel::usePublicBpm,
-            onOpenWebSearch = {
-                context.startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse(publicBpmSearchUrl(metadata))
-                    )
-                )
-            },
-            onOpenSource = { url ->
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-            }
-        )
+        if (uiState.selectedUri != null) {
+            SectionLabel("Estimates")
+        }
 
         selectedCandidate?.let { candidate ->
             val candidateTrust = fileCandidateTrust(
@@ -637,6 +590,39 @@ fun FileAnalyzeScreen(
             }
         }
 
+        if (uiState.selectedUri != null) {
+            PublicBpmLookupCard(
+                metadata = metadata,
+                isLookingUp = uiState.isLookingUpPublicBpm,
+                statusMessage = uiState.publicBpmStatusMessage,
+                candidates = uiState.publicBpmCandidates,
+                onLookup = viewModel::lookupPublicBpm,
+                onUse = viewModel::usePublicBpm,
+                onOpenWebSearch = {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse(publicBpmSearchUrl(metadata))
+                        )
+                    )
+                },
+                onOpenSource = { url ->
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                }
+            )
+
+            WebBpmAnswerCard(
+                text = uiState.webReferenceText,
+                parsedCandidate = uiState.parsedWebBpm,
+                statusMessage = uiState.webReferenceStatusMessage,
+                isSaving = uiState.isSaving,
+                hasFile = uiState.selectedUri != null,
+                onTextChange = viewModel::onWebReferenceTextChange,
+                onUse = viewModel::useWebReferenceBpm,
+                onSave = viewModel::saveWebReferenceBpm
+            )
+        }
+
         if (
             uiState.selectedUri != null &&
             !uiState.isAnalyzing &&
@@ -656,17 +642,6 @@ fun FileAnalyzeScreen(
                 onReset = settingsViewModel::resetAnalysisDefaults
             )
         }
-
-        WebBpmAnswerCard(
-            text = uiState.webReferenceText,
-            parsedCandidate = uiState.parsedWebBpm,
-            statusMessage = uiState.webReferenceStatusMessage,
-            isSaving = uiState.isSaving,
-            hasFile = uiState.selectedUri != null,
-            onTextChange = viewModel::onWebReferenceTextChange,
-            onUse = viewModel::useWebReferenceBpm,
-            onSave = viewModel::saveWebReferenceBpm
-        )
     }
 
     pendingEstimateSave?.let { pending ->
@@ -784,52 +759,32 @@ private fun MeasureWorkbenchCard(
     onPickFile: () -> Unit,
     onAnalyze: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    SectionCard {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Text(
-                        text = "LOCAL FILE",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                Text(
+                StatusChip(text = "FILE TAP", selected = hasFile)
+                StatusChip(
                     text = when {
                         isAnalyzing -> "Analyzing"
                         isReadingMetadata -> "Reading"
                         hasFile -> "Ready to tap"
                         else -> "No file"
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                 )
             }
 
             Text(
-                text = metadata?.title ?: metadata?.displayName ?: "Play a local track and tap BPM",
+                text = metadata?.title ?: metadata?.displayName ?: "Choose a file and tap BPM",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = metadata?.artist ?: metadata?.album ?: "Choose a file, listen here, then save your tapped BPM.",
+                text = metadata?.artist ?: metadata?.album ?: "Listen here, tap the beat, then save a verified BPM.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -849,29 +804,28 @@ private fun MeasureWorkbenchCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(
+                    IconActionButton(
+                        label = "Change file",
                         onClick = onPickFile,
+                        icon = Icons.Filled.FolderOpen,
                         modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Change")
-                    }
-                    OutlinedButton(
+                    )
+                    IconActionButton(
+                        label = if (isAnalyzing) "Estimating" else "Estimate BPM",
                         onClick = onAnalyze,
+                        icon = Icons.Filled.GraphicEq,
                         modifier = Modifier.weight(1f),
                         enabled = !isAnalyzing && !isReadingMetadata
-                    ) {
-                        Text(if (isAnalyzing) "Estimating" else "Auto Estimate")
-                    }
+                    )
                 }
             } else {
-                Button(
+                PrimaryActionButton(
+                    label = "Choose audio file",
                     onClick = onPickFile,
+                    icon = Icons.Filled.FolderOpen,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Choose Audio File")
-                }
+                )
             }
-        }
     }
 }
 
@@ -894,14 +848,7 @@ private fun PreviewTapBpmCard(
     onUse: () -> Unit,
     onSave: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+    SectionCard {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -940,20 +887,20 @@ private fun PreviewTapBpmCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Button(
+                PrimaryActionButton(
+                    label = if (isPlaying) "Pause" else "Play",
                     onClick = onPlayPause,
+                    icon = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     modifier = Modifier.weight(1f),
                     enabled = !isPreparing
-                ) {
-                    Text(if (isPlaying) "Pause" else "Play")
-                }
-                OutlinedButton(
+                )
+                IconActionButton(
+                    label = "Restart",
                     onClick = onRestart,
+                    icon = Icons.Filled.Refresh,
                     modifier = Modifier.weight(1f),
                     enabled = !isPreparing
-                ) {
-                    Text("Restart")
-                }
+                )
             }
 
             LowLatencyTapPad(
@@ -986,21 +933,19 @@ private fun PreviewTapBpmCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedButton(
+                IconActionButton(
+                    label = "Reset",
                     onClick = onReset,
+                    icon = Icons.Filled.Refresh,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text("Reset")
-                }
-                Button(
+                )
+                PrimaryActionButton(
+                    label = if (isSaving) "Saving" else "Save verified",
                     onClick = onSave,
                     modifier = Modifier.weight(1f),
                     enabled = snapshot.bpm != null && !isSaving
-                ) {
-                    Text(if (isSaving) "Saving" else "Save Tap")
-                }
+                )
             }
-        }
     }
 }
 
@@ -1681,6 +1626,11 @@ fun SettingsScreen(
             projectionLauncher.launch(captureViewModel.createCaptureIntent())
         }
     }
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasRecordAudioPermission = granted
+    }
 
     DisposableEffect(lifecycleOwner, context) {
         val observer = LifecycleEventObserver { _, event ->
@@ -1718,9 +1668,9 @@ fun SettingsScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        SettingsSectionTitle("Core")
         FirstRunGuideCard()
 
+        SettingsSectionTitle("Permissions")
         PermissionStatusCard(
             title = "Current media access",
             granted = hasNotificationAccess,
@@ -1736,6 +1686,22 @@ fun SettingsScreen(
             }
         )
 
+        PermissionStatusCard(
+            title = "Microphone listen",
+            granted = hasRecordAudioPermission,
+            status = if (hasRecordAudioPermission) "Ready" else "Optional",
+            body = if (hasRecordAudioPermission) {
+                "Mic Listen can be used as an experimental fallback with speaker playback."
+            } else {
+                "Optional fallback. It cannot hear headphone-only playback and is not required for Tap BPM."
+            },
+            actionLabel = if (hasRecordAudioPermission) null else "Grant Mic",
+            onAction = {
+                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        )
+
+        SettingsSectionTitle("Tap & Measure")
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp)
@@ -1766,7 +1732,6 @@ fun SettingsScreen(
             }
         }
 
-        SettingsSectionTitle("File Estimates")
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp)
@@ -1835,7 +1800,7 @@ fun SettingsScreen(
             Text("Reset Estimates")
         }
 
-        SettingsSectionTitle("Experimental")
+        SettingsSectionTitle("Advanced")
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
@@ -1943,31 +1908,16 @@ fun SettingsScreen(
 
 @Composable
 private fun FirstRunGuideCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+    SectionCard {
             Text(
-                text = "Best path",
+                text = "Recommended flow",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            Text(
-                text = "Play music, tap along, compare Reference BPM, then save to Library playlists.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "Automatic capture is optional and may be blocked by the player.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+            CompactInfoRow(label = "1", value = "Play music")
+            CompactInfoRow(label = "2", value = "Tap BPM")
+            CompactInfoRow(label = "3", value = "Save")
+            CompactInfoRow(label = "4", value = "Sort by workout range")
     }
 }
 

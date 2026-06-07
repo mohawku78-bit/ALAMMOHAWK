@@ -40,6 +40,11 @@ private val LightColors = lightColorScheme(
 )
 
 private val AppTypography = Typography(
+    displayLarge = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 58.sp,
+        lineHeight = 64.sp
+    ),
     displaySmall = TextStyle(
         fontWeight = FontWeight.Bold,
         fontSize = 34.sp,
@@ -60,6 +65,11 @@ private val AppTypography = Typography(
         fontSize = 18.sp,
         lineHeight = 24.sp
     ),
+    titleSmall = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp,
+        lineHeight = 20.sp
+    ),
     bodyMedium = TextStyle(
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
@@ -74,6 +84,16 @@ private val AppTypography = Typography(
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp
+    ),
+    labelMedium = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp
+    ),
+    labelSmall = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        lineHeight = 14.sp
     )
 )
 
