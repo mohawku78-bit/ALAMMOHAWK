@@ -22,6 +22,10 @@ struct ScoreRow {
     double bpm;
     double full_score;
     double low_score;
+    double kick_score;
+    double snare_score;
+    double hat_score;
+    double drum_score;
     double peak_score;
     double score;
 };
@@ -111,6 +115,81 @@ std::vector<double> low_band_envelope(const std::vector<float>& samples, int sam
     return positive_normalize(moving_average(energies, window));
 }
 
+std::vector<double> transient_envelope_from_energy(const std::vector<double>& energies, int sample_rate) {
+    std::vector<double> flux(energies.size(), 0.0);
+    for (size_t i = 1; i < energies.size(); ++i) {
+        flux[i] = std::max(0.0, energies[i] - energies[i - 1]);
+    }
+    const int energy_window = std::max(3, (sample_rate / kHopSize) / 4);
+    const int flux_window = std::max(3, (sample_rate / kHopSize) / 5);
+    const auto energy = positive_normalize(moving_average(energies, energy_window));
+    const auto transient = positive_normalize(moving_average(flux, flux_window));
+    const size_t size = std::min(energy.size(), transient.size());
+    std::vector<double> output(size, 0.0);
+    for (size_t i = 0; i < size; ++i) {
+        output[i] = std::max(transient[i], energy[i] * 0.32);
+    }
+    return output;
+}
+
+std::vector<double> drum_band_envelope(
+    const std::vector<float>& samples,
+    int sample_rate,
+    double low_cut_hz,
+    double high_cut_hz,
+    bool has_low_cut
+) {
+    const int frame_count = std::max(0, static_cast<int>(samples.size()) - kFrameSize) / kHopSize + 1;
+    std::vector<double> energies(frame_count, 0.0);
+    if (sample_rate <= 0 || frame_count <= 0) return energies;
+
+    const double high_alpha = std::exp(-2.0 * M_PI * high_cut_hz / sample_rate);
+    const double low_alpha = has_low_cut ? std::exp(-2.0 * M_PI * low_cut_hz / sample_rate) : 0.0;
+    double high_state = 0.0;
+    double low_state = 0.0;
+
+    for (int frame = 0; frame < frame_count; ++frame) {
+        const int start = frame * kHopSize;
+        const int end = std::min(start + kFrameSize, static_cast<int>(samples.size()));
+        double sum = 0.0;
+        for (int i = start; i < end; ++i) {
+            const double sample = static_cast<double>(samples[i]);
+            high_state = (1.0 - high_alpha) * sample + high_alpha * high_state;
+            double filtered = high_state;
+            if (has_low_cut) {
+                low_state = (1.0 - low_alpha) * sample + low_alpha * low_state;
+                filtered = high_state - low_state;
+            }
+            sum += filtered * filtered;
+        }
+        energies[frame] = std::sqrt(sum / std::max(1, end - start));
+    }
+    return transient_envelope_from_energy(energies, sample_rate);
+}
+
+std::vector<double> high_band_envelope(const std::vector<float>& samples, int sample_rate, double cutoff_hz) {
+    const int frame_count = std::max(0, static_cast<int>(samples.size()) - kFrameSize) / kHopSize + 1;
+    std::vector<double> energies(frame_count, 0.0);
+    if (sample_rate <= 0 || frame_count <= 0) return energies;
+
+    const double alpha = std::exp(-2.0 * M_PI * cutoff_hz / sample_rate);
+    double low_state = 0.0;
+
+    for (int frame = 0; frame < frame_count; ++frame) {
+        const int start = frame * kHopSize;
+        const int end = std::min(start + kFrameSize, static_cast<int>(samples.size()));
+        double sum = 0.0;
+        for (int i = start; i < end; ++i) {
+            const double sample = static_cast<double>(samples[i]);
+            low_state = (1.0 - alpha) * sample + alpha * low_state;
+            const double high = sample - low_state;
+            sum += high * high;
+        }
+        energies[frame] = std::sqrt(sum / std::max(1, end - start));
+    }
+    return transient_envelope_from_energy(energies, sample_rate);
+}
+
 std::vector<double> onset_envelope(const std::vector<float>& samples, int sample_rate) {
     const auto energy = energy_envelope(samples, sample_rate);
     std::vector<double> flux(energy.size(), 0.0);
@@ -191,9 +270,14 @@ double subdivision_penalty(const ScoreRow& row, const std::map<int, ScoreRow>& r
 
     const ScoreRow& half_row = half_it->second;
     const double half_combined =
-        half_row.full_score + 0.18 * half_row.low_score + 0.08 * half_row.peak_score;
+        half_row.full_score + 0.18 * half_row.low_score + half_row.drum_score + 0.08 * half_row.peak_score;
     const bool half_is_competitive = half_combined >= row.score * 0.68;
     const bool half_has_stronger_low_pulse = half_row.low_score >= row.low_score * 1.08;
+    const bool half_has_stronger_drums =
+        half_row.kick_score + half_row.snare_score >= (row.kick_score + row.snare_score) * 0.96;
+    const bool fast_candidate_looks_like_hat =
+        row.hat_score >= std::max(0.000001, row.kick_score + row.snare_score) * 1.20;
+    if (half_is_competitive && half_has_stronger_drums && fast_candidate_looks_like_hat) return 0.55;
     if (half_is_competitive && half_has_stronger_low_pulse) return 0.68;
     if (row.bpm >= 190.0 && half_is_competitive) return 0.82;
     return 1.0;
@@ -258,6 +342,9 @@ std::vector<Candidate> estimate_tempo(
 
     const double onset_rate = sample_rate / static_cast<double>(kHopSize);
     const auto low_envelope = low_band_envelope(samples, sample_rate);
+    const auto kick_envelope = drum_band_envelope(samples, sample_rate, 0.0, 180.0, false);
+    const auto snare_envelope = drum_band_envelope(samples, sample_rate, 180.0, 2500.0, true);
+    const auto hat_envelope = high_band_envelope(samples, sample_rate, 4000.0);
     std::vector<ScoreRow> rows;
 
     for (double bpm = min_bpm; bpm <= max_bpm; bpm += 0.5) {
@@ -266,11 +353,20 @@ std::vector<Candidate> estimate_tempo(
 
         const double full_score = rhythm_score(envelope, lag, 0.42, 0.20);
         const double low_score = rhythm_score(low_envelope, lag, 0.35, 0.15);
+        const double kick_score = rhythm_score(kick_envelope, lag, 0.30, 0.12);
+        const double snare_score = rhythm_score(snare_envelope, lag, 0.55, 0.18);
+        const double hat_score = rhythm_score(hat_envelope, lag, 0.12, 0.04);
+        const double hat_subdivision_score = lag > 2 ? autocorrelation_score(hat_envelope, lag / 2) : 0.0;
+        const double drum_score =
+            0.20 * kick_score +
+            0.14 * snare_score +
+            0.06 * hat_subdivision_score +
+            0.02 * hat_score;
         const double peak_score = 0.0;
-        const double score = full_score + 0.18 * low_score + 0.08 * peak_score;
+        const double score = full_score + 0.18 * low_score + drum_score + 0.08 * peak_score;
 
         if (std::isfinite(score) && score > 0.0) {
-            rows.push_back({bpm, full_score, low_score, peak_score, score});
+            rows.push_back({bpm, full_score, low_score, kick_score, snare_score, hat_score, drum_score, peak_score, score});
         }
     }
 

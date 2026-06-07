@@ -12,8 +12,8 @@
 - Google Drive desktop copy: `G:\내 드라이브\Integrated BPM Meter\IntegratedBpmMeter-debug.apk`
 - Android package id: `com.example.integratedbpmmeter`
 - Android app label: `Bpm Now`
-- Latest APK SHA-256: `96A09A7EDB17403BC6186327F8114BF4A531D8852A78E671A294142CDB972829`
-- Latest release ZIP SHA-256: `C319DE76D66E581EB5B59140FCA1089DCDB66FF3892F2CEAECA101DA9F3D0F2B`
+- Latest APK SHA-256: `FE6BB928F4F8A2BBE57A1EF1D6871E462F9E991226CE4B9EF8870054E90C51FC`
+- Latest release ZIP SHA-256: `A1E844273AFA876A16088681AECA7D1FAA8DB18F8F128BA12F93C7BB6B8D8B9E`
 - GitHub remote: `https://github.com/mohawku78-bit/ALAMMOHAWK.git`
 - Git branch: `main`
 - Minimum SDK: 29
@@ -26,6 +26,7 @@
 - Auto-extraction follow-up adds low-band kick/bass envelope scoring in both Kotlin fallback and native C++ tempo engines, reducing cases where loud high-frequency subdivisions win over the underlying beat.
 - Very fast 190-200 BPM candidates are now downranked when the half-time tempo has competitive full-envelope support and stronger low-frequency pulse support. 180 BPM remains valid for Running High Pace.
 - Auto-extraction v2 adds a candidate calibration layer before File Tap display. It reorders raw candidates using reference-family matches, segment agreement, warnings, and fast subdivision penalties, while showing short reason labels beside each candidate.
+- Drum-focused extraction now computes lightweight kick/low drum, snare/clap, and hi-hat transient envelopes in both Kotlin and native engines. Hi-hat is treated mostly as subdivision support, while kick/snare support protects the main beat from 2x/4x locks.
 - Common Compose UI primitives now standardize cards, chips, action buttons, icon buttons, spacing, and compact info rows across the polished screens.
 - Measure is ordered as current song card, large album-art Tap BPM pad, Reset/Save, compact Reference BPM result, and File Tap entry.
 - Library default controls now prioritize search, short smart-list chips, 160/170/180/custom BPM range presets, Play, and Share links. Source filters, Samsung playlist tools, local-file matching, and M3U export stay behind `More tools`.
@@ -135,6 +136,7 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-07 latest build installed successfully over wireless ADB on Galaxy Tab `SM_T970`; UI screenshots/dumps verified Measure, Library, Settings, and File Tap after the final polish pass.
 - 2026-06-07 auto-extraction follow-up passed targeted `BpmEstimatorTest`/`TempoEngineTest`, then full `:app:compileDebugKotlin`, `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; latest build installed successfully over wireless ADB on Galaxy Tab `SM_T970`.
 - 2026-06-07 auto-extraction v2 passed targeted `TempoCandidateCalibratorTest`, `FileBpmCandidatePrioritizerTest`, and `BpmEstimatorTest`, then full compile/unit/lint/assemble verification; latest build installed successfully over wireless ADB on Galaxy Tab `SM_T970`.
+- 2026-06-07 drum-focused extraction passed targeted `BpmEstimatorTest`, `TempoEngineTest`, and `TempoCandidateCalibratorTest`, then full compile/unit/lint/assemble verification; latest build installed successfully over wireless ADB on Galaxy Tab `SM_T970`.
 - Debug APK was produced at `app/build/outputs/apk/debug/app-debug.apk`.
 - APK was copied to Google Drive desktop folder as `IntegratedBpmMeter-debug.apk`.
 - 2026-06-06 latest build installed successfully on connected `SM_F946N` via `adb install -r` and launched with `monkey`.
@@ -190,8 +192,8 @@ The first native build may install Android SDK NDK `27.0.12077973` and CMake `3.
 - 2026-06-07 Library review-strip follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 verification confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
 - 2026-06-07 File Analyze estimate-save confirmation follow-up passed `:app:testDebugUnitTest`, `:app:lintDebug`, and `:app:assembleDebug`; real-device install was not repeated because `R3CW70KPD4M` remained in ADB `offline` state.
-- Latest release APK SHA-256 is `96A09A7EDB17403BC6186327F8114BF4A531D8852A78E671A294142CDB972829`.
-- Latest clean release bundle SHA-256 is `C319DE76D66E581EB5B59140FCA1089DCDB66FF3892F2CEAECA101DA9F3D0F2B`.
+- Latest release APK SHA-256 is `FE6BB928F4F8A2BBE57A1EF1D6871E462F9E991226CE4B9EF8870054E90C51FC`.
+- Latest clean release bundle SHA-256 is `A1E844273AFA876A16088681AECA7D1FAA8DB18F8F128BA12F93C7BB6B8D8B9E`.
 - `QA_NOTES.md` records automated checks and real-device checklist.
 
 ## Known Limitations

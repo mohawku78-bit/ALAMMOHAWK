@@ -22,6 +22,9 @@ class BpmEstimator(
         if (envelope.size < 8) return emptyList()
 
         val lowEnvelope = lowBandEnvelope(samples, sampleRate)
+        val kickEnvelope = drumBandEnvelope(samples, sampleRate, lowCutHz = null, highCutHz = 180.0)
+        val snareEnvelope = drumBandEnvelope(samples, sampleRate, lowCutHz = 180.0, highCutHz = 2_500.0)
+        val hatEnvelope = highBandEnvelope(samples, sampleRate, cutoffHz = 4_000.0)
         val onsetRate = sampleRate.toDouble() / HOP_SIZE
         val peakSupport = peakTempoSupport(envelope, onsetRate)
         val rows = mutableListOf<TempoScoreRow>()
@@ -32,14 +35,31 @@ class BpmEstimator(
 
             val fullScore = rhythmScore(envelope, lag)
             val lowScore = rhythmScore(lowEnvelope, lag, secondWeight = 0.35, thirdWeight = 0.15)
+            val kickScore = rhythmScore(kickEnvelope, lag, secondWeight = 0.30, thirdWeight = 0.12)
+            val snareScore = rhythmScore(snareEnvelope, lag, secondWeight = 0.55, thirdWeight = 0.18)
+            val hatBeatScore = rhythmScore(hatEnvelope, lag, secondWeight = 0.12, thirdWeight = 0.04)
+            val hatSubdivisionScore = if (lag > 2) {
+                autocorrelationScore(hatEnvelope, lag / 2)
+            } else {
+                0.0
+            }
+            val drumScore =
+                0.20 * kickScore +
+                    0.14 * snareScore +
+                    0.06 * hatSubdivisionScore +
+                    0.02 * hatBeatScore
             val peakScore = peakSupport[bpm] ?: 0.0
-            val score = fullScore + 0.18 * lowScore + 0.08 * peakScore
+            val score = fullScore + 0.18 * lowScore + drumScore + 0.08 * peakScore
 
             if (score.isFinite() && score > 0.0) {
                 rows += TempoScoreRow(
                     bpm = bpm,
                     fullScore = fullScore,
                     lowScore = lowScore,
+                    kickScore = kickScore,
+                    snareScore = snareScore,
+                    hatScore = hatBeatScore,
+                    drumScore = drumScore,
                     peakScore = peakScore,
                     score = score
                 )
@@ -113,10 +133,15 @@ class BpmEstimator(
         if (row.bpm < 185) return 1.0
         val half = (row.bpm / 2.0).roundToInt()
         val halfRow = rowsByBpm[half] ?: return 1.0
-        val halfCombined = halfRow.fullScore + 0.18 * halfRow.lowScore + 0.08 * halfRow.peakScore
+        val halfCombined = halfRow.fullScore + 0.18 * halfRow.lowScore + halfRow.drumScore + 0.08 * halfRow.peakScore
         val halfIsCompetitive = halfCombined >= row.score * 0.68
         val halfHasStrongerLowPulse = halfRow.lowScore >= row.lowScore * 1.08
+        val halfHasStrongerDrums =
+            halfRow.kickScore + halfRow.snareScore >= (row.kickScore + row.snareScore) * 0.96
+        val fastCandidateLooksLikeHat =
+            row.hatScore >= (row.kickScore + row.snareScore).coerceAtLeast(0.000001) * 1.20
         return when {
+            halfIsCompetitive && halfHasStrongerDrums && fastCandidateLooksLikeHat -> 0.55
             halfIsCompetitive && halfHasStrongerLowPulse -> 0.68
             row.bpm >= 190 && halfIsCompetitive -> 0.82
             else -> 1.0
@@ -163,6 +188,78 @@ class BpmEstimator(
         }
 
         return positiveNormalize(movingAverage(energies, window = max(3, (sampleRate / HOP_SIZE) / 4)))
+    }
+
+    private fun drumBandEnvelope(
+        samples: FloatArray,
+        sampleRate: Int,
+        lowCutHz: Double?,
+        highCutHz: Double
+    ): DoubleArray {
+        val frameCount = ((samples.size - FRAME_SIZE).coerceAtLeast(0) / HOP_SIZE) + 1
+        if (frameCount <= 0 || sampleRate <= 0) return DoubleArray(0)
+
+        val highAlpha = exp(-2.0 * Math.PI * highCutHz / sampleRate)
+        val lowAlpha = lowCutHz?.let { exp(-2.0 * Math.PI * it / sampleRate) }
+        val energies = DoubleArray(frameCount)
+        var highState = 0.0
+        var lowState = 0.0
+
+        for (frame in 0 until frameCount) {
+            val start = frame * HOP_SIZE
+            val end = (start + FRAME_SIZE).coerceAtMost(samples.size)
+            var sum = 0.0
+            for (index in start until end) {
+                val sample = samples[index].toDouble()
+                highState = (1.0 - highAlpha) * sample + highAlpha * highState
+                val filtered = if (lowAlpha != null) {
+                    lowState = (1.0 - lowAlpha) * sample + lowAlpha * lowState
+                    highState - lowState
+                } else {
+                    highState
+                }
+                sum += filtered * filtered
+            }
+            energies[frame] = sqrt(sum / max(1, end - start))
+        }
+
+        return transientEnvelopeFromEnergy(energies, sampleRate)
+    }
+
+    private fun highBandEnvelope(samples: FloatArray, sampleRate: Int, cutoffHz: Double): DoubleArray {
+        val frameCount = ((samples.size - FRAME_SIZE).coerceAtLeast(0) / HOP_SIZE) + 1
+        if (frameCount <= 0 || sampleRate <= 0) return DoubleArray(0)
+
+        val alpha = exp(-2.0 * Math.PI * cutoffHz / sampleRate)
+        val energies = DoubleArray(frameCount)
+        var lowState = 0.0
+
+        for (frame in 0 until frameCount) {
+            val start = frame * HOP_SIZE
+            val end = (start + FRAME_SIZE).coerceAtMost(samples.size)
+            var sum = 0.0
+            for (index in start until end) {
+                val sample = samples[index].toDouble()
+                lowState = (1.0 - alpha) * sample + alpha * lowState
+                val high = sample - lowState
+                sum += high * high
+            }
+            energies[frame] = sqrt(sum / max(1, end - start))
+        }
+
+        return transientEnvelopeFromEnergy(energies, sampleRate)
+    }
+
+    private fun transientEnvelopeFromEnergy(energies: DoubleArray, sampleRate: Int): DoubleArray {
+        val flux = DoubleArray(energies.size)
+        for (index in 1 until energies.size) {
+            flux[index] = max(0.0, energies[index] - energies[index - 1])
+        }
+        val smoothWindow = max(3, (sampleRate / HOP_SIZE) / 5)
+        val energy = positiveNormalize(movingAverage(energies, window = max(3, (sampleRate / HOP_SIZE) / 4)))
+        val transient = positiveNormalize(movingAverage(flux, window = smoothWindow))
+        val size = minOf(energy.size, transient.size)
+        return DoubleArray(size) { index -> max(transient[index], energy[index] * 0.32) }
     }
 
     private fun onsetEnvelope(samples: FloatArray, sampleRate: Int): DoubleArray {
@@ -350,6 +447,10 @@ class BpmEstimator(
         val bpm: Int,
         val fullScore: Double,
         val lowScore: Double,
+        val kickScore: Double,
+        val snareScore: Double,
+        val hatScore: Double,
+        val drumScore: Double,
         val peakScore: Double,
         val score: Double
     )

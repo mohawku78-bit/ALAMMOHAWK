@@ -95,6 +95,21 @@ class BpmEstimatorTest {
         )
     }
 
+    @Test
+    fun drumFocusedVotingKeepsBaseTempoWithSnareBackbeatAndLoudHats() {
+        val sampleRate = 44_100
+        val candidates = BpmEstimator().estimate(
+            kickSnareAndLoudHatTrack(sampleRate, bpm = 112.0),
+            sampleRate
+        )
+
+        assertFalse(candidates.isEmpty())
+        assertTrue(
+            "Expected kick/snare drum pulse near 112 BPM to lead over hat subdivisions: $candidates",
+            abs(candidates.first().bpm - 112.0) <= 5.0
+        )
+    }
+
     private fun pulseTrack(sampleRate: Int, bpm: Double): FloatArray {
         val samples = FloatArray(sampleRate * 24)
         val interval = (sampleRate * 60.0 / bpm).toInt()
@@ -183,6 +198,33 @@ class BpmEstimatorTest {
         while (position < samples.size) {
             addSineBurst(samples, sampleRate, position, frequencyHz = 5_500.0, durationSeconds = 0.015, amplitude = 1.00)
             position += subdivisionInterval
+        }
+
+        return samples
+    }
+
+    private fun kickSnareAndLoudHatTrack(sampleRate: Int, bpm: Double): FloatArray {
+        val samples = FloatArray(sampleRate * 32)
+        val beatInterval = (sampleRate * 60.0 / bpm).toInt()
+        val hatInterval = (beatInterval / 2).coerceAtLeast(1)
+
+        var position = 0
+        var beat = 0
+        while (position < samples.size) {
+            if (beat % 4 == 0 || beat % 4 == 2) {
+                addSineBurst(samples, sampleRate, position, frequencyHz = 85.0, durationSeconds = 0.10, amplitude = 0.78)
+            }
+            if (beat % 4 == 1 || beat % 4 == 3) {
+                addSineBurst(samples, sampleRate, position, frequencyHz = 950.0, durationSeconds = 0.055, amplitude = 0.72)
+            }
+            position += beatInterval
+            beat++
+        }
+
+        position = 0
+        while (position < samples.size) {
+            addSineBurst(samples, sampleRate, position, frequencyHz = 6_200.0, durationSeconds = 0.012, amplitude = 0.92)
+            position += hatInterval
         }
 
         return samples

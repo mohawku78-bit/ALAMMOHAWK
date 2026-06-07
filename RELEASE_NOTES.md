@@ -17,6 +17,9 @@
 - File Tap now calibrates raw automatic candidates before display, preserving useful half/double alternates while picking the most defensible primary candidate.
 - Automatic candidates now show short reason labels such as `Low-band pulse`, `Stable segments`, `Reference family match`, `Possible double-time`, or `Needs tap-check`.
 - Direct saved/public reference-family matches are preferred over raw half/double guesses when deciding which candidate to show first.
+- Added lightweight drum-focused extraction. The tempo engine now separately scores kick/low drum, snare/clap, and hi-hat transient envelopes instead of relying only on a single full-band onset curve.
+- Hi-hat energy is treated mostly as subdivision support, so loud hats are less likely to force a 2x BPM when kick/snare evidence supports the base tempo.
+- Added a regression test for a 112 BPM kick/snare backbeat with loud hi-hats to protect the common rock/pop “too fast” failure mode.
 - Measure is simplified into the daily-use order: current song card, large album-art Tap BPM area, Reset/Save, compact Reference BPM result, and File Tap entry.
 - Library now shows the essential controls first: search, short smart-list chips, 160/170/180/custom BPM range presets, Play, and Share links.
 - Advanced Library tools such as source filters, local-file matching, Samsung playlist creation, Samsung Music launch, and M3U export are kept behind `More tools`.
